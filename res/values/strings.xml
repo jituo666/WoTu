@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">沃图</string>
+    <string name="unit_mm">毫米</string>
+    <string name="set_label_albums">相册</string>
+</resources>
