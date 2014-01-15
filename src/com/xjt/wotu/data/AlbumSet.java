@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.xjt.wotu.data;
 
 import android.content.ContentResolver;
@@ -39,8 +23,6 @@ import com.xjt.wotu.util.UtilsMedia;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-// LocalAlbumSet lists all image or video albums in the local storage.
-// The path should be "/local/image", "local/video" or "/local/all"
 public class AlbumSet extends MediaSet implements
         FutureListener<ArrayList<MediaSet>> {
     public static final MediaPath PATH_ALL = new MediaPath("/local/all");
