@@ -11,6 +11,7 @@ import android.os.Handler;
 
 public class DataManager {
 
+    public final static Object LOCK = new Object(); 
     private WoTuApp mWoTuApp;
     private HashMap<Uri, DataObserver> mNotifierMap = new HashMap<Uri, DataObserver>();
     private final Handler mMainHandler;

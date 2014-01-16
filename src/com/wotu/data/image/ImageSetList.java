@@ -28,23 +28,16 @@ import com.wotu.R;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class ImageSetList extends MediaSetObject implements
-        FutureListener<ArrayList<MediaSetObject>> {
-    public static final MediaPath PATH_ALL = new MediaPath("/local/all");
-    public static final MediaPath PATH_IMAGE = new MediaPath("/local/image");
-    public static final MediaPath PATH_VIDEO = new MediaPath("/local/video");
+public class ImageSetList extends MediaSetObject implements FutureListener<ArrayList<MediaSetObject>> {
 
-    private static final String TAG = "LocalAlbumSet";
+    private static final String TAG = "ImageSetList";
     private static final String EXTERNAL_MEDIA = "external";
 
-    // The indices should match the following projections.
     private static final int INDEX_BUCKET_ID = 0;
-    private static final int INDEX_MEDIA_TYPE = 1;
     private static final int INDEX_BUCKET_NAME = 2;
 
     private static final Uri mBaseUri = Files.getContentUri(EXTERNAL_MEDIA);
     private static final Uri mWatchUriImage = Images.Media.EXTERNAL_CONTENT_URI;
-    private static final Uri mWatchUriVideo = Video.Media.EXTERNAL_CONTENT_URI;
 
     // BUCKET_DISPLAY_NAME is a string like "Camera" which is the directory
     // name of where an image or video is in. BUCKET_ID is a hash of the path
@@ -65,7 +58,8 @@ public class ImageSetList extends MediaSetObject implements
     // MediaStore.
     private static final String[] PROJECTION_BUCKET = {
             ImageColumns.BUCKET_ID,
-            FileColumns.MEDIA_TYPE, ImageColumns.BUCKET_DISPLAY_NAME
+            FileColumns.MEDIA_TYPE,
+            ImageColumns.BUCKET_DISPLAY_NAME
     };
 
     // We want to order the albums by reverse chronological order. We abuse the
@@ -83,7 +77,6 @@ public class ImageSetList extends MediaSetObject implements
     private final WoTuApp mApp;
     private ArrayList<MediaSetObject> mAlbums = new ArrayList<MediaSetObject>();
     private final DataNotifier mNotifierImage;
-    private final DataNotifier mNotifierVideo;
     private final String mName;
     private final Handler mHandler;
     private boolean mIsLoading;
@@ -96,22 +89,18 @@ public class ImageSetList extends MediaSetObject implements
         mApp = application;
         mHandler = new Handler(application.getMainLooper());
         mNotifierImage = new DataNotifier(this, mWatchUriImage, application);
-        mNotifierVideo = new DataNotifier(this, mWatchUriVideo, application);
         mName = application.getResources().getString(
                 R.string.set_label_albums);
     }
 
-    @Override
     public MediaSetObject getSubMediaSet(int index) {
         return mAlbums.get(index);
     }
 
-    @Override
     public int getSubMediaSetCount() {
         return mAlbums.size();
     }
 
-    @Override
     public String getName() {
         return mName;
     }
@@ -182,36 +171,11 @@ public class ImageSetList extends MediaSetObject implements
             ArrayList<MediaSetObject> albums = new ArrayList<MediaSetObject>();
             DataManager dataManager = mApp.getDataManager();
             for (BucketEntry entry : entries) {
-                MediaSetObject album = getLocalAlbum(dataManager, mType, mPath,
+                MediaSetObject album = getLocalAlbum(dataManager, 0, mPath,
                         entry.bucketId, entry.bucketName);
                 albums.add(album);
             }
             return albums;
-        }
-    }
-
-    private MediaSetObject getLocalAlbum(DataManager manager, int type, MediaPath parent,
-            int id, String name) {
-        synchronized (DataManager.LOCK) {
-            MediaPath path = parent.getChild(id);
-            MediaObject object = manager.peekMediaObject(path);
-            if (object != null)
-                return (MediaSetObject) object;
-            switch (type) {
-                case MEDIA_TYPE_IMAGE:
-                    return new LocalImageSet(path, mApp, id, true, name);
-                case MEDIA_TYPE_VIDEO:
-                    return new LocalImageSet(path, mApp, id, false, name);
-                case MEDIA_TYPE_ALL:
-                    Comparator<MediaItem> comp = DataManager.sDateTakenComparator;
-                    return new LocalMergeAlbum(path, comp, new MediaSetObject[] {
-                            getLocalAlbum(manager, MEDIA_TYPE_IMAGE, PATH_IMAGE,
-                                    id, name),
-                            getLocalAlbum(manager, MEDIA_TYPE_VIDEO, PATH_VIDEO,
-                                    id, name)
-                    }, id);
-            }
-            throw new IllegalArgumentException(String.valueOf(type));
         }
     }
 
@@ -251,7 +215,7 @@ public class ImageSetList extends MediaSetObject implements
     // 2. Prevent calling onFutureDone() and reload() concurrently
     public synchronized long reload() {
         // "|" is used instead of "||" because we want to clear both flags.
-        if (mNotifierImage.isDirty() | mNotifierVideo.isDirty()) {
+        if (mNotifierImage.isDirty()) {
             if (mLoadTask != null)
                 mLoadTask.cancel();
             mIsLoading = true;
@@ -289,7 +253,6 @@ public class ImageSetList extends MediaSetObject implements
     // For debug only. Fake there is a ContentObserver.onChange() event.
     void fakeChange() {
         mNotifierImage.fakeChange();
-        mNotifierVideo.fakeChange();
     }
 
     private static class BucketEntry {

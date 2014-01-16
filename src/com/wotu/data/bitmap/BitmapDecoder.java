@@ -10,7 +10,7 @@ import android.util.FloatMath;
 import com.wotu.common.WLog;
 import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.data.ImageOperations;
+import com.wotu.data.image.ImageObject;
 import com.wotu.util.UtilsBase;
 
 import java.io.FileDescriptor;
@@ -97,7 +97,7 @@ public class BitmapDecoder {
         int w = options.outWidth;
         int h = options.outHeight;
 
-        if (type == ImageOperations.TYPE_MICROTHUMBNAIL) {
+        if (type == ImageObject.TYPE_MICROTHUMBNAIL) {
             // We center-crop the original image as it's micro thumbnail. In this case,
             // we want to make sure the shorter side >= "targetSize".
             float scale = (float) targetSize / Math.min(w, h);
@@ -123,7 +123,7 @@ public class BitmapDecoder {
 
         // We need to resize down if the decoder does not support inSampleSize
         // (For example, GIF images)
-        float scale = (float) targetSize / (type == ImageOperations.TYPE_MICROTHUMBNAIL
+        float scale = (float) targetSize / (type == ImageObject.TYPE_MICROTHUMBNAIL
                 ? Math.min(result.getWidth(), result.getHeight())
                 : Math.max(result.getWidth(), result.getHeight()));
 

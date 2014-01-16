@@ -1,5 +1,6 @@
 package com.wotu.app;
 
+import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
 
 import android.app.Application;
@@ -9,23 +10,37 @@ import android.os.Looper;
 
 public class WoTuAppImpl extends Application implements WoTuApp {
 
+    private DataManager mDataManager;
+    private ThreadPool mThreadPool;
+
     @Override
-    public DataManager getDataManager() {
-        return new DataManager(this);
+    public synchronized DataManager getDataManager() {
+        if (mDataManager == null) {
+            mDataManager = new DataManager(this);
+        }
+        return mDataManager;
     }
 
     @Override
     public ContentResolver getContentResolver() {
         return getContentResolver();
     }
-    
+
     @Override
     public Resources getResources() {
         return getResources();
     }
-    
+
     @Override
     public Looper getMainLooper() {
         return getMainLooper();
+    }
+
+    @Override
+    public synchronized ThreadPool getThreadPool() {
+        if (mThreadPool == null) {
+            mThreadPool = new ThreadPool();
+        }
+        return mThreadPool;
     }
 }

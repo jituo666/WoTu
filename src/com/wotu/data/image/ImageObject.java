@@ -12,7 +12,7 @@ import com.wotu.data.bitmap.BitmapPool;
 import com.wotu.data.bitmap.BitmapUtils;
 import com.wotu.util.UtilsCom;
 
-public abstract class ImageBase extends MediaObject {
+public abstract class ImageObject extends MediaObject {
 
     public static final int TYPE_THUMBNAIL = 1;
     public static final int TYPE_MICROTHUMBNAIL = 2;
@@ -32,7 +32,7 @@ public abstract class ImageBase extends MediaObject {
     private static final BitmapPool sThumbPool = new BitmapPool(4);
     private static final BytesBufferPool sMicroThumbBufferPool = new BytesBufferPool(BYTESBUFFE_POOL_SIZE, BYTESBUFFER_SIZE);
 
-    public ImageBase(MediaPath path, long version) {
+    public ImageObject(MediaPath path, long version) {
         super(path, version);
     }
 

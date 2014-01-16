@@ -13,28 +13,29 @@ import android.provider.MediaStore.Images.ImageColumns;
 
 import com.wotu.app.WoTuApp;
 import com.wotu.common.ThreadPool.Job;
+import com.wotu.data.MediaOperations;
 import com.wotu.data.MediaPath;
 import com.wotu.data.bitmap.BitmapUtils;
 import com.wotu.util.UpdateHelper;
 import com.wotu.util.UtilsCom;
 
-public class LocalImage extends ImageBase implements Image{
+public class LocalImage extends ImageObject implements Image {
     public static final String TAG = "Image";
     // fields index
-    private static final int INDEX_ID = 0;
-    private static final int INDEX_CAPTION = 1;
-    private static final int INDEX_MIME_TYPE = 2;
-    private static final int INDEX_LATITUDE = 3;
-    private static final int INDEX_LONGITUDE = 4;
-    private static final int INDEX_DATE_TAKEN = 5;
-    private static final int INDEX_DATE_ADDED = 6;
-    private static final int INDEX_DATE_MODIFIED = 7;
-    private static final int INDEX_DATA = 8;
-    private static final int INDEX_ORIENTATION = 9;
-    private static final int INDEX_BUCKET_ID = 10;
-    private static final int INDEX_SIZE = 11;
-    private static final int INDEX_WIDTH = 12;
-    private static final int INDEX_HEIGHT = 13;
+    public static final int INDEX_ID = 0;
+    public static final int INDEX_CAPTION = 1;
+    public static final int INDEX_MIME_TYPE = 2;
+    public static final int INDEX_LATITUDE = 3;
+    public static final int INDEX_LONGITUDE = 4;
+    public static final int INDEX_DATE_TAKEN = 5;
+    public static final int INDEX_DATE_ADDED = 6;
+    public static final int INDEX_DATE_MODIFIED = 7;
+    public static final int INDEX_DATA = 8;
+    public static final int INDEX_ORIENTATION = 9;
+    public static final int INDEX_BUCKET_ID = 10;
+    public static final int INDEX_SIZE = 11;
+    public static final int INDEX_WIDTH = 12;
+    public static final int INDEX_HEIGHT = 13;
     // fields
     public int id;
     public String caption;
@@ -145,6 +146,11 @@ public class LocalImage extends ImageBase implements Image{
     }
 
     @Override
+    public String getFilePath() {
+        return filePath;
+    }
+
+    @Override
     public int getWidth() {
         return width;
     }
@@ -176,18 +182,18 @@ public class LocalImage extends ImageBase implements Image{
 
     @Override
     public int getSupportedOperations() {
-        int operation = SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_CROP
-                | SUPPORT_SETAS | SUPPORT_EDIT | SUPPORT_INFO;
+        int operation = MediaOperations.SUPPORT_DELETE | MediaOperations.SUPPORT_SHARE | MediaOperations.SUPPORT_CROP
+                | MediaOperations.SUPPORT_SETAS | MediaOperations.SUPPORT_EDIT | MediaOperations.SUPPORT_INFO;
         if (BitmapUtils.isSupportedByRegionDecoder(mimeType)) {
-            operation |= SUPPORT_FULL_IMAGE;
+            operation |= MediaOperations.SUPPORT_FULL_IMAGE;
         }
 
         if (BitmapUtils.isRotationSupported(mimeType)) {
-            operation |= SUPPORT_ROTATE;
+            operation |= MediaOperations.SUPPORT_ROTATE;
         }
 
         if (UtilsCom.isValidLocation(latitude, longitude)) {
-            operation |= SUPPORT_SHOW_ON_MAP;
+            operation |= MediaOperations.SUPPORT_SHOW_ON_MAP;
         }
         return operation;
     }
@@ -224,4 +230,10 @@ public class LocalImage extends ImageBase implements Image{
     public void rotate(int degrees) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void delete() {
+
+    }
+
 }

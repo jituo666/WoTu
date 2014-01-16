@@ -7,13 +7,11 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.ImageColumns;
-import android.provider.MediaStore.Video;
-import android.provider.MediaStore.Video.VideoColumns;
 
 import com.wotu.app.WoTuApp;
 import com.wotu.common.WLog;
-import com.wotu.data.DataManager;
 import com.wotu.data.DataNotifier;
+import com.wotu.data.MediaOperations;
 import com.wotu.data.MediaPath;
 import com.wotu.data.MediaSetObject;
 import com.wotu.util.UtilsBase;
@@ -27,15 +25,12 @@ import java.util.ArrayList;
  * @author jetoo
  * 
  */
-public class LocalImageSet extends MediaSetObject {
+public class LocalImageSet extends MediaSetObject implements ImageSet {
 
     private static final String TAG = "LocalImageSet";
 
     public static final String KEY_BUCKET_ID = "bucketId";
-    private static final String[] COUNT_PROJECTION = {
-            "count(*)"
-    };
-
+    private static final String[] COUNT_PROJECTION = { "count(*)" };
     private static final int INVALID_COUNT = -1;
     private final String mWhereClause;
     private final String mOrderClause;
@@ -49,33 +44,28 @@ public class LocalImageSet extends MediaSetObject {
     private final DataNotifier mNotifier;
     private int mCachedCount = INVALID_COUNT;
 
-    public LocalImageSet(MediaPath path, WoTuApp application, int bucketId, String name) {
+    public LocalImageSet(MediaPath path, WoTuApp app, int bucketId, String name) {
         super(path, nextVersionNumber());
-        mApplication = application;
-        mResolver = application.getContentResolver();
+        mApplication = app;
+        mResolver = app.getContentResolver();
         mBucketId = bucketId;
-        mName = getLocalizedName(application.getResources(), bucketId, name);
+        mName = getLocalizedName(app.getResources(), bucketId, name);
 
         mWhereClause = ImageColumns.BUCKET_ID + " = ?";
-        mOrderClause = ImageColumns.DATE_TAKEN + " DESC, "
-                + ImageColumns._ID + " DESC";
+        mOrderClause = ImageColumns.DATE_TAKEN + " DESC, " + ImageColumns._ID + " DESC";
         mBaseUri = Images.Media.EXTERNAL_CONTENT_URI;
         mProjection = LocalImage.PROJECTION;
 
-        mNotifier = new DataNotifier(this, mBaseUri, application);
+        mNotifier = new DataNotifier(this, mBaseUri, app);
     }
 
-    public LocalImageSet(MediaPath path, WoTuApp application, int bucketId) {
-        this(path, application, bucketId,
-                ImageSetList.getBucketName(application.getContentResolver(),
-                        bucketId));
+    public LocalImageSet(MediaPath path, WoTuApp app, int bucketId) {
+        this(path, app, bucketId, ImageSetList.getBucketName(app.getContentResolver(), bucketId));
     }
 
-    @Override
     public Uri getContentUri() {
-        return MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
-                .appendQueryParameter(KEY_BUCKET_ID,
-                        String.valueOf(mBucketId)).build();
+        return MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon().
+                appendQueryParameter(KEY_BUCKET_ID, String.valueOf(mBucketId)).build();
     }
 
     /*
@@ -86,16 +76,13 @@ public class LocalImageSet extends MediaSetObject {
      * the contents of database may have already changed.
      */
     public ArrayList<Image> getMediaItem(int start, int count) {
-        DataManager dataManager = mApplication.getDataManager();
-        Uri uri = mBaseUri.buildUpon()
-                .appendQueryParameter("limit", start + "," + count).build();
+
+        Uri uri = mBaseUri.buildUpon().appendQueryParameter("limit", start + "," + count).build();
         ArrayList<Image> list = new ArrayList<Image>();
         UtilsCom.assertNotInRenderThread();
         Cursor cursor = mResolver.query(
                 uri, mProjection, mWhereClause,
-                new String[] {
-                String.valueOf(mBucketId)
-                },
+                new String[] {String.valueOf(mBucketId)},
                 mOrderClause);
         if (cursor == null) {
             WLog.w(TAG, "query fail: " + uri);
@@ -104,87 +91,15 @@ public class LocalImageSet extends MediaSetObject {
 
         try {
             while (cursor.moveToNext()) {
-                int id = cursor.getInt(0); // _id must be in the first column
-                MediaPath childPath = mItemPath.getChild(id);
-                Image item = loadOrUpdateItem(childPath, cursor,
-                        dataManager, mApplication);
+                String pathStr = cursor.getString(LocalImage.INDEX_DATA);
+                MediaPath path = new MediaPath(pathStr);
+                Image item = new LocalImage(path, mApplication, cursor);
                 list.add(item);
             }
         } finally {
             cursor.close();
         }
         return list;
-    }
-
-    private static Image loadOrUpdateItem(MediaPath path, Cursor cursor,
-            DataManager dataManager, WoTuApp app) {
-        Image item = (Image) dataManager.peekMediaObject(path);
-        if (item == null) {
-            item = new Image(path, app, cursor);
-
-        } else {
-            item.updateContent(cursor);
-        }
-        return item;
-    }
-
-    // The pids array are sorted by the (path) id.
-    public static Image[] getMediaItemById(
-            WoTuApp application, ArrayList<Integer> ids) {
-        // get the lower and upper bound of (path) id
-        Image[] result = new Image[ids.size()];
-        if (ids.isEmpty())
-            return result;
-        int idLow = ids.get(0);
-        int idHigh = ids.get(ids.size() - 1);
-
-        // prepare the query parameters
-        Uri baseUri;
-        String[] projection;
-        MediaPath itemPath;
-
-        baseUri = Images.Media.EXTERNAL_CONTENT_URI;
-        projection = Image.PROJECTION;
-
-        ContentResolver resolver = application.getContentResolver();
-        DataManager dataManager = application.getDataManager();
-        Cursor cursor = resolver.query(baseUri, projection, "_id BETWEEN ? AND ?",
-                new String[] {
-                        String.valueOf(idLow), String.valueOf(idHigh)
-                },
-                "_id");
-        if (cursor == null) {
-            WLog.w(TAG, "query fail" + baseUri);
-            return result;
-        }
-        try {
-            int n = ids.size();
-            int i = 0;
-
-            while (i < n && cursor.moveToNext()) {
-                int id = cursor.getInt(0); // _id must be in the first column
-
-                // Match id with the one on the ids list.
-                if (ids.get(i) > id) {
-                    continue;
-                }
-
-                while (ids.get(i) < id) {
-                    if (++i >= n) {
-                        return result;
-                    }
-                }
-
-                MediaPath childPath = itemPath.getChild(id);
-                Image item = loadOrUpdateItem(childPath, cursor, dataManager,
-                        application);
-                result[i] = item;
-                ++i;
-            }
-            return result;
-        } finally {
-            cursor.close();
-        }
     }
 
     public static interface ItemConsumer {
@@ -253,22 +168,16 @@ public class LocalImageSet extends MediaSetObject {
         return mDataVersion;
     }
 
-    @Override
     public int getSupportedOperations() {
-        return SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_INFO;
+        return MediaOperations.SUPPORT_DELETE | MediaOperations.SUPPORT_SHARE | MediaOperations.SUPPORT_INFO;
     }
 
     @Override
     public void delete() {
         UtilsCom.assertNotInRenderThread();
-        mResolver.delete(mBaseUri, mWhereClause,
-                new String[] {
-                String.valueOf(mBucketId)
-                });
-        mApplication.getDataManager().broadcastLocalDeletion();
+        mResolver.delete(mBaseUri, mWhereClause, new String[] {String.valueOf(mBucketId)});
     }
 
-    @Override
     public boolean isLeafAlbum() {
         return true;
     }
@@ -287,5 +196,10 @@ public class LocalImageSet extends MediaSetObject {
         //            return name;
         //        }
         return "";
+    }
+
+    @Override
+    public Image getCoverMediaItem() {
+        return null;
     }
 }

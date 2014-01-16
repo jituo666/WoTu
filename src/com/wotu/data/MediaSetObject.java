@@ -15,10 +15,9 @@ import java.util.WeakHashMap;
 //
 // getTotalMediaItemCount() returns the number of all MediaItems, including
 // those in sub-MediaSets.
-public abstract class MediaSetObject extends MediaObject {
+public abstract class MediaSetObject {
 
     private static final String TAG = "MediaSet";
-
     public static final int MEDIAITEM_BATCH_FETCH_COUNT = 500;
     public static final int INDEX_NOT_FOUND = -1;
 
@@ -26,6 +25,8 @@ public abstract class MediaSetObject extends MediaObject {
     public static final int SYNC_RESULT_CANCELLED = 1;
     public static final int SYNC_RESULT_ERROR = 2;
 
+    protected final MediaPath mPath;
+    protected long mDataVersion;
     /** Listener to be used with requestSync(SyncListener). */
     public static interface SyncListener {
         /**
@@ -41,18 +42,13 @@ public abstract class MediaSetObject extends MediaObject {
     }
 
     public MediaSetObject(MediaPath path, long version) {
-        super(path, version);
-    }
-
-    public int getMediaItemCount() {
-        return 0;
+        mPath = path;
+        mDataVersion = version;
     }
 
     public boolean isLoading() {
         return false;
     }
-
-    public abstract String getName();
 
     private WeakHashMap<ContentListener, Object> mListeners = new WeakHashMap<ContentListener, Object>();
 
@@ -76,6 +72,10 @@ public abstract class MediaSetObject extends MediaObject {
         }
     }
 
+    public static synchronized long nextVersionNumber() {
+        return ++MediaObject.sVersionSerial;
+    }
+    
     public abstract long reload();
 
     /**
@@ -142,7 +142,6 @@ public abstract class MediaSetObject extends MediaObject {
             synchronized (this) {
                 for (int i = 0, n = sets.length; i < n; ++i) {
                     mFutures[i] = sets[i].requestSync(this);
-                    WLog.d(TAG, "  request sync: " + UtilsBase.maskDebugInfo(sets[i].getName()));
                 }
             }
         }
@@ -196,8 +195,6 @@ public abstract class MediaSetObject extends MediaObject {
                     listener = mListener;
                     notifyAll();
                 }
-                WLog.d(TAG, "onSyncDone: " + UtilsBase.maskDebugInfo(mediaSet.getName())
-                        + " #pending=" + mPendingCount);
             }
             if (listener != null)
                 listener.onSyncDone(MediaSetObject.this, mResult);
