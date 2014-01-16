@@ -1,4 +1,4 @@
-package com.wotu.data;
+package com.wotu.data.image;
 
 import android.content.ContentResolver;
 import android.content.res.Resources;
@@ -12,19 +12,24 @@ import android.provider.MediaStore.Video.VideoColumns;
 
 import com.wotu.app.WoTuApp;
 import com.wotu.common.WLog;
+import com.wotu.data.DataManager;
+import com.wotu.data.DataNotifier;
+import com.wotu.data.MediaPath;
+import com.wotu.data.MediaSetObject;
 import com.wotu.util.UtilsBase;
 import com.wotu.util.UtilsCom;
 
 import java.util.ArrayList;
 
 /**
- * album:used to manager images
+ * ImageSet to manage images
+ * 
  * @author jetoo
- *
+ * 
  */
-public class Album extends MediaSet {
+public class LocalImageSet extends MediaSetObject {
 
-    private static final String TAG = "Album";
+    private static final String TAG = "LocalImageSet";
 
     public static final String KEY_BUCKET_ID = "bucketId";
     private static final String[] COUNT_PROJECTION = {
@@ -44,7 +49,7 @@ public class Album extends MediaSet {
     private final DataNotifier mNotifier;
     private int mCachedCount = INVALID_COUNT;
 
-    public Album(MediaPath path, WoTuApp application, int bucketId, String name) {
+    public LocalImageSet(MediaPath path, WoTuApp application, int bucketId, String name) {
         super(path, nextVersionNumber());
         mApplication = application;
         mResolver = application.getContentResolver();
@@ -55,14 +60,14 @@ public class Album extends MediaSet {
         mOrderClause = ImageColumns.DATE_TAKEN + " DESC, "
                 + ImageColumns._ID + " DESC";
         mBaseUri = Images.Media.EXTERNAL_CONTENT_URI;
-        mProjection = Image.PROJECTION;
+        mProjection = LocalImage.PROJECTION;
 
         mNotifier = new DataNotifier(this, mBaseUri, application);
     }
 
-    public Album(MediaPath path, WoTuApp application, int bucketId) {
+    public LocalImageSet(MediaPath path, WoTuApp application, int bucketId) {
         this(path, application, bucketId,
-                AlbumSet.getBucketName(application.getContentResolver(),
+                ImageSetList.getBucketName(application.getContentResolver(),
                         bucketId));
     }
 
@@ -73,17 +78,23 @@ public class Album extends MediaSet {
                         String.valueOf(mBucketId)).build();
     }
 
-    @Override
-    public ArrayList<ImageItem> getMediaItem(int start, int count) {
+    /*
+     * Returns the media items in the range [start, start + count). The number
+     * of media items returned may be less than the specified count if there are
+     * not enough media items available. The number of media items available may
+     * not be consistent with the return value of getMediaItemCount() because
+     * the contents of database may have already changed.
+     */
+    public ArrayList<Image> getMediaItem(int start, int count) {
         DataManager dataManager = mApplication.getDataManager();
         Uri uri = mBaseUri.buildUpon()
                 .appendQueryParameter("limit", start + "," + count).build();
-        ArrayList<ImageItem> list = new ArrayList<ImageItem>();
+        ArrayList<Image> list = new ArrayList<Image>();
         UtilsCom.assertNotInRenderThread();
         Cursor cursor = mResolver.query(
                 uri, mProjection, mWhereClause,
                 new String[] {
-                    String.valueOf(mBucketId)
+                String.valueOf(mBucketId)
                 },
                 mOrderClause);
         if (cursor == null) {
@@ -93,9 +104,9 @@ public class Album extends MediaSet {
 
         try {
             while (cursor.moveToNext()) {
-                int id = cursor.getInt(0);  // _id must be in the first column
+                int id = cursor.getInt(0); // _id must be in the first column
                 MediaPath childPath = mItemPath.getChild(id);
-                ImageItem item = loadOrUpdateItem(childPath, cursor,
+                Image item = loadOrUpdateItem(childPath, cursor,
                         dataManager, mApplication);
                 list.add(item);
             }
@@ -105,9 +116,9 @@ public class Album extends MediaSet {
         return list;
     }
 
-    private static ImageItem loadOrUpdateItem(MediaPath path, Cursor cursor,
+    private static Image loadOrUpdateItem(MediaPath path, Cursor cursor,
             DataManager dataManager, WoTuApp app) {
-        ImageItem item = (ImageItem) dataManager.peekMediaObject(path);
+        Image item = (Image) dataManager.peekMediaObject(path);
         if (item == null) {
             item = new Image(path, app, cursor);
 
@@ -118,10 +129,10 @@ public class Album extends MediaSet {
     }
 
     // The pids array are sorted by the (path) id.
-    public static ImageItem[] getMediaItemById(
+    public static Image[] getMediaItemById(
             WoTuApp application, ArrayList<Integer> ids) {
         // get the lower and upper bound of (path) id
-        ImageItem[] result = new ImageItem[ids.size()];
+        Image[] result = new Image[ids.size()];
         if (ids.isEmpty())
             return result;
         int idLow = ids.get(0);
@@ -151,7 +162,7 @@ public class Album extends MediaSet {
             int i = 0;
 
             while (i < n && cursor.moveToNext()) {
-                int id = cursor.getInt(0);  // _id must be in the first column
+                int id = cursor.getInt(0); // _id must be in the first column
 
                 // Match id with the one on the ids list.
                 if (ids.get(i) > id) {
@@ -165,7 +176,7 @@ public class Album extends MediaSet {
                 }
 
                 MediaPath childPath = itemPath.getChild(id);
-                ImageItem item = loadOrUpdateItem(childPath, cursor, dataManager,
+                Image item = loadOrUpdateItem(childPath, cursor, dataManager,
                         application);
                 result[i] = item;
                 ++i;
@@ -176,11 +187,33 @@ public class Album extends MediaSet {
         }
     }
 
+    public static interface ItemConsumer {
+        void consume(int index, Image item);
+    }
+
+    // The default implementation uses getMediaItem() for enumerateMediaItems().
+    // Subclasses may override this and use more efficient implementations.
+    // Returns the number of items enumerated.
+    protected int enumerateMediaItems(ItemConsumer consumer, int startIndex) {
+        int total = getMediaItemCount();
+        int start = 0;
+        while (start < total) {
+            int count = Math.min(MEDIAITEM_BATCH_FETCH_COUNT, total - start);
+            ArrayList<Image> items = getMediaItem(start, count);
+            for (int i = 0, n = items.size(); i < n; i++) {
+                Image item = items.get(i);
+                consumer.consume(startIndex + start + i, item);
+            }
+            start += count;
+        }
+        return total;
+    }
+
     public static Cursor getItemCursor(ContentResolver resolver, Uri uri,
             String[] projection, int id) {
         return resolver.query(uri, projection, "_id=?",
                 new String[] {
-                    String.valueOf(id)
+                String.valueOf(id)
                 }, null);
     }
 
@@ -190,7 +223,7 @@ public class Album extends MediaSet {
             Cursor cursor = mResolver.query(
                     mBaseUri, COUNT_PROJECTION, mWhereClause,
                     new String[] {
-                        String.valueOf(mBucketId)
+                    String.valueOf(mBucketId)
                     }, null);
             if (cursor == null) {
                 WLog.w(TAG, "query fail");
@@ -230,7 +263,7 @@ public class Album extends MediaSet {
         UtilsCom.assertNotInRenderThread();
         mResolver.delete(mBaseUri, mWhereClause,
                 new String[] {
-                    String.valueOf(mBucketId)
+                String.valueOf(mBucketId)
                 });
         mApplication.getDataManager().broadcastLocalDeletion();
     }

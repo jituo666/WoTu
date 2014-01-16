@@ -1,4 +1,4 @@
-package com.wotu.data;
+package com.wotu.data.image;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -16,6 +16,11 @@ import com.wotu.common.FutureListener;
 import com.wotu.common.ThreadPool;
 import com.wotu.common.WLog;
 import com.wotu.common.ThreadPool.JobContext;
+import com.wotu.data.DataManager;
+import com.wotu.data.DataNotifier;
+import com.wotu.data.MediaObject;
+import com.wotu.data.MediaPath;
+import com.wotu.data.MediaSetObject;
 import com.wotu.util.UtilsBase;
 import com.wotu.util.UtilsMedia;
 import com.wotu.R;
@@ -23,8 +28,8 @@ import com.wotu.R;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class AlbumSet extends MediaSet implements
-        FutureListener<ArrayList<MediaSet>> {
+public class ImageSetList extends MediaSetObject implements
+        FutureListener<ArrayList<MediaSetObject>> {
     public static final MediaPath PATH_ALL = new MediaPath("/local/all");
     public static final MediaPath PATH_IMAGE = new MediaPath("/local/image");
     public static final MediaPath PATH_VIDEO = new MediaPath("/local/video");
@@ -76,17 +81,17 @@ public class AlbumSet extends MediaSet implements
     private static final String BUCKET_ORDER_BY = "MAX(datetaken) DESC";
 
     private final WoTuApp mApp;
-    private ArrayList<MediaSet> mAlbums = new ArrayList<MediaSet>();
+    private ArrayList<MediaSetObject> mAlbums = new ArrayList<MediaSetObject>();
     private final DataNotifier mNotifierImage;
     private final DataNotifier mNotifierVideo;
     private final String mName;
     private final Handler mHandler;
     private boolean mIsLoading;
 
-    private Future<ArrayList<MediaSet>> mLoadTask;
-    private ArrayList<MediaSet> mLoadBuffer;
+    private Future<ArrayList<MediaSetObject>> mLoadTask;
+    private ArrayList<MediaSetObject> mLoadBuffer;
 
-    public AlbumSet(MediaPath path, WoTuApp application) {
+    public ImageSetList(MediaPath path, WoTuApp application) {
         super(path, nextVersionNumber());
         mApp = application;
         mHandler = new Handler(application.getMainLooper());
@@ -97,7 +102,7 @@ public class AlbumSet extends MediaSet implements
     }
 
     @Override
-    public MediaSet getSubMediaSet(int index) {
+    public MediaSetObject getSubMediaSet(int index) {
         return mAlbums.get(index);
     }
 
@@ -149,11 +154,11 @@ public class AlbumSet extends MediaSet implements
         return -1;
     }
 
-    private class AlbumsLoader implements ThreadPool.Job<ArrayList<MediaSet>> {
+    private class AlbumsLoader implements ThreadPool.Job<ArrayList<MediaSetObject>> {
 
         @Override
         @SuppressWarnings("unchecked")
-        public ArrayList<MediaSet> run(JobContext jc) {
+        public ArrayList<MediaSetObject> run(JobContext jc) {
             // Note: it will be faster if we only select media_type and
             // bucket_id.
             // need to test the performance if that is worth
@@ -174,10 +179,10 @@ public class AlbumSet extends MediaSet implements
                 circularShiftRight(entries, offset++, index);
             }
 
-            ArrayList<MediaSet> albums = new ArrayList<MediaSet>();
+            ArrayList<MediaSetObject> albums = new ArrayList<MediaSetObject>();
             DataManager dataManager = mApp.getDataManager();
             for (BucketEntry entry : entries) {
-                MediaSet album = getLocalAlbum(dataManager, mType, mPath,
+                MediaSetObject album = getLocalAlbum(dataManager, mType, mPath,
                         entry.bucketId, entry.bucketName);
                 albums.add(album);
             }
@@ -185,21 +190,21 @@ public class AlbumSet extends MediaSet implements
         }
     }
 
-    private MediaSet getLocalAlbum(DataManager manager, int type, MediaPath parent,
+    private MediaSetObject getLocalAlbum(DataManager manager, int type, MediaPath parent,
             int id, String name) {
         synchronized (DataManager.LOCK) {
             MediaPath path = parent.getChild(id);
             MediaObject object = manager.peekMediaObject(path);
             if (object != null)
-                return (MediaSet) object;
+                return (MediaSetObject) object;
             switch (type) {
                 case MEDIA_TYPE_IMAGE:
-                    return new Album(path, mApp, id, true, name);
+                    return new LocalImageSet(path, mApp, id, true, name);
                 case MEDIA_TYPE_VIDEO:
-                    return new Album(path, mApp, id, false, name);
+                    return new LocalImageSet(path, mApp, id, false, name);
                 case MEDIA_TYPE_ALL:
                     Comparator<MediaItem> comp = DataManager.sDateTakenComparator;
-                    return new LocalMergeAlbum(path, comp, new MediaSet[] {
+                    return new LocalMergeAlbum(path, comp, new MediaSetObject[] {
                             getLocalAlbum(manager, MEDIA_TYPE_IMAGE, PATH_IMAGE,
                                     id, name),
                             getLocalAlbum(manager, MEDIA_TYPE_VIDEO, PATH_VIDEO,
@@ -256,7 +261,7 @@ public class AlbumSet extends MediaSet implements
         if (mLoadBuffer != null) {
             mAlbums = mLoadBuffer;
             mLoadBuffer = null;
-            for (MediaSet album : mAlbums) {
+            for (MediaSetObject album : mAlbums) {
                 album.reload();
             }
             WLog.i("test-r", "enter reload()-2:" + mDataVersion);
@@ -266,13 +271,13 @@ public class AlbumSet extends MediaSet implements
     }
 
     @Override
-    public synchronized void onFutureDone(Future<ArrayList<MediaSet>> future) {
+    public synchronized void onFutureDone(Future<ArrayList<MediaSetObject>> future) {
         if (mLoadTask != future)
             return; // ignore, wait for the latest task
         mLoadBuffer = future.get();
         mIsLoading = false;
         if (mLoadBuffer == null)
-            mLoadBuffer = new ArrayList<MediaSet>();
+            mLoadBuffer = new ArrayList<MediaSetObject>();
         mHandler.post(new Runnable() {
             @Override
             public void run() {

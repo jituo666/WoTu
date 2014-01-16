@@ -19,7 +19,6 @@ import android.view.WindowManager;
 
 import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.data.ImageItem;
 
 import java.util.Arrays;
 import java.util.List;
@@ -206,7 +205,7 @@ public class UtilsCom {
 
     public static boolean isValidLocation(double latitude, double longitude) {
         // TODO: change || to && after we fix the default location issue
-        return (latitude != ImageItem.INVALID_LATLNG || longitude != ImageItem.INVALID_LATLNG);
+        return (latitude != 0f || longitude != 0f);
     }
 
     public static String formatLatitudeLongitude(String format, double latitude,
@@ -270,13 +269,5 @@ public class UtilsCom {
             Log.i(TAG, "Fail to access external storage", e);
         }
         return false;
-    }
-
-    public static boolean isPanorama(ImageItem item) {
-        if (item == null)
-            return false;
-        int w = item.getWidth();
-        int h = item.getHeight();
-        return (h > 0 && w / h >= 2);
     }
 }

@@ -1,0 +1,28 @@
+------------------------------Project dev issues---------------------------
+(I),调研Android上的数据访问策略。
+1,MediaScanner的触发机制，运行时机，扫描策略
+2,Sqlite3 增删改查，缓存机制，事物机制实现
+3,ContentResolver ContentProvider机制
+4,ContentObserver,FileObserver机制
+
+另外：多线程访问数据库的策略
+
+(II),GUI系统
+1,WindowManager
+2,Surafce/SurfaceFlinger
+3,Skia&OpenglEs
+4,FrameBuffer,OverLay&Camera
+-------------------------------app dev issues-------------------------------
+(III),基本框架系统
+1,ServiceManager,ActivityManager,WindowsManager,PackageManager
+2,SurfaceFlinger & AudioFlinger
+
+(V),Android系统原理
+0,kernels(OS && drivers)
+1,system calls
+2,init && HAL
+3,all system services & dalvik (c)
+4,all framework services (java/c/c++)
+5,framework proxy All Managers
+6,app development
+

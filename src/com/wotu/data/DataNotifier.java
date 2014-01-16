@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DataNotifier {
 
-    private MediaSet mMediaSet;
+    private MediaSetObject mMediaSet;
     private AtomicBoolean mContentDirty = new AtomicBoolean(true);
 
-    public DataNotifier(MediaSet set, Uri uri, WoTuApp app) {
+    public DataNotifier(MediaSetObject set, Uri uri, WoTuApp app) {
         mMediaSet = set;
         app.getDataManager().registerDataNotifier(uri, this);
     }

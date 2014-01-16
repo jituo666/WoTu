@@ -1,4 +1,7 @@
-package com.wotu.data;
+package com.wotu.data.image;
+
+import java.text.DateFormat;
+import java.util.Date;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -10,30 +13,14 @@ import android.provider.MediaStore.Images.ImageColumns;
 
 import com.wotu.app.WoTuApp;
 import com.wotu.common.ThreadPool.Job;
+import com.wotu.data.MediaPath;
 import com.wotu.data.bitmap.BitmapUtils;
 import com.wotu.util.UpdateHelper;
 import com.wotu.util.UtilsCom;
 
-public class Image extends ImageItem {
-
-    private final WoTuApp mApplication;
-
-    // database fields
-    public int id;
-    public String caption;
-    public String mimeType;
-    public long fileSize;
-    public double latitude = INVALID_LATLNG;
-    public double longitude = INVALID_LATLNG;
-    public long dateTakenInMs;
-    public long dateAddedInSec;
-    public long dateModifiedInSec;
-    public String filePath;
-    public int bucketId;
-    public int rotation;
-    public int width;
-    public int height;
-
+public class LocalImage extends ImageBase implements Image{
+    public static final String TAG = "Image";
+    // fields index
     private static final int INDEX_ID = 0;
     private static final int INDEX_CAPTION = 1;
     private static final int INDEX_MIME_TYPE = 2;
@@ -48,29 +35,46 @@ public class Image extends ImageItem {
     private static final int INDEX_SIZE = 11;
     private static final int INDEX_WIDTH = 12;
     private static final int INDEX_HEIGHT = 13;
+    // fields
+    public int id;
+    public String caption;
+    public String mimeType;
+    public long fileSize;
+    public double latitude = 0f;
+    public double longitude = 0f;
+    public long dateTakenInMs;
+    public long dateAddedInSec;
+    public long dateModifiedInSec;
+    public String filePath;
+    public int bucketId;
+    public int rotation;
+    public int width;
+    public int height;
     //
-    static final String[] PROJECTION = {
-            ImageColumns._ID,           // 0
-            ImageColumns.TITLE,         // 1
-            ImageColumns.MIME_TYPE,     // 2
-            ImageColumns.LATITUDE,      // 3
-            ImageColumns.LONGITUDE,     // 4
-            ImageColumns.DATE_TAKEN,    // 5
-            ImageColumns.DATE_ADDED,    // 6
+    protected static final String[] PROJECTION = {
+            ImageColumns._ID, // 0
+            ImageColumns.TITLE, // 1
+            ImageColumns.MIME_TYPE, // 2
+            ImageColumns.LATITUDE, // 3
+            ImageColumns.LONGITUDE, // 4
+            ImageColumns.DATE_TAKEN, // 5
+            ImageColumns.DATE_ADDED, // 6
             ImageColumns.DATE_MODIFIED, // 7
-            ImageColumns.DATA,          // 8
-            ImageColumns.ORIENTATION,   // 9
-            ImageColumns.BUCKET_ID,     // 10
-            ImageColumns.SIZE,          // 11
-            ImageColumns.WIDTH,         // 12
+            ImageColumns.DATA, // 8
+            ImageColumns.ORIENTATION, // 9
+            ImageColumns.BUCKET_ID, // 10
+            ImageColumns.SIZE, // 11
+            ImageColumns.WIDTH, // 12
             ImageColumns.HEIGHT
-    // 13
+            // 13
     };
 
-    public Image(MediaPath path, WoTuApp application, int id) {
+    private final WoTuApp mApp;
+
+    public LocalImage(MediaPath path, WoTuApp application, int id) {
         super(path, nextVersionNumber());
-        mApplication = application;
-        ContentResolver resolver = mApplication.getContentResolver();
+        mApp = application;
+        ContentResolver resolver = mApp.getContentResolver();
         Uri uri = Images.Media.EXTERNAL_CONTENT_URI;
         Cursor cursor = resolver.query(uri, PROJECTION, "_id=?", new String[] {
                 String.valueOf(id)
@@ -89,9 +93,9 @@ public class Image extends ImageItem {
         }
     }
 
-    public Image(MediaPath path, WoTuApp app, Cursor cursor) {
+    public LocalImage(MediaPath path, WoTuApp app, Cursor cursor) {
         super(path, nextVersionNumber());
-        mApplication = app;
+        mApp = app;
         loadFromCursor(cursor);
     }
 
@@ -136,16 +140,6 @@ public class Image extends ImageItem {
     }
 
     @Override
-    public Job<Bitmap> requestThumnail(int type) {
-        return null;
-    }
-
-    @Override
-    public Job<BitmapRegionDecoder> requestImage() {
-        return null;
-    }
-
-    @Override
     public String getMimeType() {
         return mimeType;
     }
@@ -158,6 +152,26 @@ public class Image extends ImageItem {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    public int getFullImageRotation() {
+        return getRotation();
+    }
+
+    public int getRotation() {
+        return rotation;
+    }
+
+    public long getSize() {
+        return fileSize;
+    }
+
+    public Job<Bitmap> requestThumnail(int type) {
+        return null;
+    }
+
+    public Job<BitmapRegionDecoder> requestImage() {
+        return null;
     }
 
     @Override
@@ -176,5 +190,38 @@ public class Image extends ImageItem {
             operation |= SUPPORT_SHOW_ON_MAP;
         }
         return operation;
+    }
+
+    @Override
+    public long getDateInMs() {
+        return dateTakenInMs;
+    }
+
+    @Override
+    public void getLatLong(double[] latLong) {
+        latLong[0] = latitude;
+        latLong[1] = longitude;
+    }
+
+    @Override
+    public ImageDetails getDetails() {
+        ImageDetails details = new ImageDetails();
+        details.addDetail(ImageDetails.INDEX_PATH, filePath);
+        details.addDetail(ImageDetails.INDEX_TITLE, caption);
+        DateFormat formater = DateFormat.getDateTimeInstance();
+        details.addDetail(ImageDetails.INDEX_DATETIME, formater.format(new Date(dateTakenInMs)));
+        if (UtilsCom.isValidLocation(latitude, longitude)) {
+            details.addDetail(ImageDetails.INDEX_LOCATION, new double[] {
+                    latitude, longitude
+            });
+        }
+        if (fileSize > 0)
+            details.addDetail(ImageDetails.INDEX_SIZE, fileSize);
+        return details;
+    }
+
+    @Override
+    public void rotate(int degrees) {
+        throw new UnsupportedOperationException();
     }
 }

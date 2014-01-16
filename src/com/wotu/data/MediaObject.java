@@ -2,12 +2,11 @@ package com.wotu.data;
 
 import android.net.Uri;
 
-public abstract class MediaObject {
+public abstract class MediaObject implements Media{
     @SuppressWarnings("unused")
     private static final String TAG = "MediaObject";
     public static final long INVALID_DATA_VERSION = -1;
 
-    // These are the bits returned from getMediaType():
     public static final int MEDIA_TYPE_UNKNOWN = 1;
     public static final int MEDIA_TYPE_IMAGE = 2;
     public static final int MEDIA_TYPE_VIDEO = 4;
@@ -17,12 +16,10 @@ public abstract class MediaObject {
     public static final String MEDIA_TYPE_VIDEO_STRING = "video";
     public static final String MEDIA_TYPE_ALL_STRING = "all";
 
-    // These are flags for cache() and return values for getCacheFlag():
     public static final int CACHE_FLAG_NO = 0;
     public static final int CACHE_FLAG_SCREENNAIL = 1;
     public static final int CACHE_FLAG_FULL = 2;
 
-    // These are return values for getCacheStatus():
     public static final int CACHE_STATUS_NOT_CACHED = 0;
     public static final int CACHE_STATUS_CACHING = 1;
     public static final int CACHE_STATUS_CACHED_SCREENNAIL = 2;
@@ -40,18 +37,19 @@ public abstract class MediaObject {
         mDataVersion = version;
     }
 
+    @Override
     public MediaPath getPath() {
         return mPath;
     }
-
+    @Override
     public int getSupportedOperations() {
         return 0;
     }
-
+    @Override
     public void delete() {
         throw new UnsupportedOperationException();
     }
-
+    @Override
     public Uri getContentUri() {
         throw new UnsupportedOperationException();
     }
@@ -59,27 +57,23 @@ public abstract class MediaObject {
     public int getMediaType() {
         return MEDIA_TYPE_UNKNOWN;
     }
-
-    public boolean Import() {
-        throw new UnsupportedOperationException();
-    }
-
+    @Override
     public long getDataVersion() {
         return mDataVersion;
     }
-
+    @Override
     public int getCacheFlag() {
         return CACHE_FLAG_NO;
     }
-
+    @Override
     public int getCacheStatus() {
         throw new UnsupportedOperationException();
     }
-
+    @Override
     public long getCacheSize() {
         throw new UnsupportedOperationException();
     }
-
+    @Override
     public void cache(int flag) {
         throw new UnsupportedOperationException();
     }

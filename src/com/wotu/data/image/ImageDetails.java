@@ -1,4 +1,4 @@
-package com.wotu.data;
+package com.wotu.data.image;
 
 import android.media.ExifInterface;
 import android.util.SparseIntArray;

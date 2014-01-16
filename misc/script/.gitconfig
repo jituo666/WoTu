@@ -1,0 +1,18 @@
+#放到主目录下
+[user]
+	name = xuanjituo
+	email = xuanjituo@camera360.com
+[core]
+        editor = vim
+[color]
+	ui = true
+	status=auto
+	interactive=auto
+	diff=auto
+	branch=auto
+[alias]
+	ci = commit
+	co = checkout
+	st = status
+	br = branch
+
