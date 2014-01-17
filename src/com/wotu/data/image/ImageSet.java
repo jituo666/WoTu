@@ -4,10 +4,11 @@ import java.util.ArrayList;
 
 public interface ImageSet {
     public ArrayList<Image> getMediaItem(int start, int count);
-    public Image getCoverMediaItem();
-    public int getMediaItemCount();
-    public String getName();
+    public int getImageCount();
+    public String getSetName();
     public long reload();
-    public int getSupportedOperations();
+    public void share();
+    public void showOnMap();
     public void delete();
+    public int getSupportedOperations();
 }

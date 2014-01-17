@@ -8,7 +8,7 @@ import com.wotu.data.MediaSetObject;
 import java.util.Comparator;
 
 public class UtilsMedia {
-    
+
     public static final String IMPORTED = "Imported";
     public static final String DOWNLOAD = "download";
     public static final Comparator<MediaSetObject> NAME_COMPARATOR = new NameComparator();

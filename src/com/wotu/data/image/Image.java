@@ -15,9 +15,9 @@ public interface Image {
 
     public int getHeight();
 
-    public int getFullImageRotation();
-
     public int getRotation();
+
+    public int getFullImageRotation();
 
     public long getSize();
 
@@ -25,15 +25,20 @@ public interface Image {
 
     public void getLatLong(double[] latLong);
 
-    public Job<Bitmap> requestThumnail(int type);
+    public Job<Bitmap> loadThumnail(int type);
 
-    public Job<BitmapRegionDecoder> requestImage();
-
-    public int getSupportedOperations();
+    public Job<BitmapRegionDecoder> loadImage();
 
     public void rotate(int degrees);
 
+    public void delete();
+
+    public void share();
+
+    public void showOnMap();
+
     public ImageDetails getDetails();
 
-    public void delete();
+    public int getSupportedOperations();
+
 }

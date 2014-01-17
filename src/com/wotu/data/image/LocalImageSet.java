@@ -60,7 +60,7 @@ public class LocalImageSet extends MediaSetObject implements ImageSet {
     }
 
     public LocalImageSet(MediaPath path, WoTuApp app, int bucketId) {
-        this(path, app, bucketId, ImageSetList.getBucketName(app.getContentResolver(), bucketId));
+        this(path, app, bucketId, LocalImageSetList.getBucketName(app.getContentResolver(), bucketId));
     }
 
     public Uri getContentUri() {

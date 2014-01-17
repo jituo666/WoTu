@@ -28,9 +28,9 @@ import com.wotu.R;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class ImageSetList extends MediaSetObject implements FutureListener<ArrayList<MediaSetObject>> {
+public class LocalImageSetList extends MediaSetObject implements FutureListener<ArrayList<MediaSetObject>> {
 
-    private static final String TAG = "ImageSetList";
+    private static final String TAG = "ImageSetMgr";
     private static final String EXTERNAL_MEDIA = "external";
 
     private static final int INDEX_BUCKET_ID = 0;
@@ -84,7 +84,7 @@ public class ImageSetList extends MediaSetObject implements FutureListener<Array
     private Future<ArrayList<MediaSetObject>> mLoadTask;
     private ArrayList<MediaSetObject> mLoadBuffer;
 
-    public ImageSetList(MediaPath path, WoTuApp application) {
+    public LocalImageSetList(MediaPath path, WoTuApp application) {
         super(path, nextVersionNumber());
         mApp = application;
         mHandler = new Handler(application.getMainLooper());
