@@ -1,4 +1,4 @@
-package com.wotu.data.bitmap;
+package com.wotu.data.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;

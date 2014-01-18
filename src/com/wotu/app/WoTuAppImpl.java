@@ -1,10 +1,10 @@
 package com.wotu.app;
 
 import com.wotu.common.ThreadPool;
-import com.wotu.data.DataManager;
 
 import android.app.Application;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Looper;
 
@@ -42,5 +42,10 @@ public class WoTuAppImpl extends Application implements WoTuApp {
             mThreadPool = new ThreadPool();
         }
         return mThreadPool;
+    }
+
+    @Override
+    public Context getAndroidContext() {
+        return getAndroidContext();
     }
 }

@@ -1,3 +1,4 @@
+
 package com.wotu.util;
 
 import android.content.ActivityNotFoundException;
@@ -17,6 +18,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
 
+import com.wotu.R;
 import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
 
@@ -269,5 +271,19 @@ public class UtilsCom {
             Log.i(TAG, "Fail to access external storage", e);
         }
         return false;
+    }
+
+    // Returns a (localized) string for the given duration (in seconds).
+    public static String formatDuration(final Context context, int duration) {
+        int h = duration / 3600;
+        int m = (duration - h * 3600) / 60;
+        int s = duration - (h * 3600 + m * 60);
+        String durationValue;
+        if (h == 0) {
+            durationValue = String.format(context.getString(R.string.details_ms), m, s);
+        } else {
+            durationValue = String.format(context.getString(R.string.details_hms), h, m, s);
+        }
+        return durationValue;
     }
 }

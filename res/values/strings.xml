@@ -3,5 +3,30 @@
 
     <string name="app_name">沃图</string>
     <string name="unit_mm">毫米</string>
-    <string name="set_label_albums">相册</string>
+    <string name="set_label_albums">集锦</string>
+    <!-- The label for the folder contains pictures taken by the camera. [CHAR LIMIT=20] -->
+    <string name="folder_camera">相机</string>
+
+    <!-- The label for the folder contains downloaded pictures. [CHAR LIMIT=20] -->
+    <string name="folder_download">下载</string>
+
+    <!--
+         The label for the folder contains pictures that was imported from an
+         external camera. [CHAR LIMIT=20]
+    -->
+    <string name="folder_imported">导入</string>
+
+    <!-- The label for the folder contains screenshot images. [CHAR LIMIT=20] -->
+    <string name="folder_screenshot">截屏</string>
+
+    <!-- Used to format short video duration in Details dialog. minutes:seconds e.g. 00:30 -->
+    <string name="details_ms">%1$02d:%2$02d</string>
+    <!-- Used to format video duration in Details dialog. hours:minutes:seconds e.g. 0:21:30 -->
+    <string name="details_hms">%1$d:%2$02d:%3$02d</string>
+    <!--
+         A label shown on the action bar. It indicates that the user is
+         viewing albums stored locally on the device [CHAR LIMIT=20]
+    -->
+    <string name="set_label_local_albums">本地集锦</string>
+
 </resources>

@@ -1,4 +1,4 @@
-package com.wotu.data.image;
+package com.wotu.data.source;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -9,35 +9,42 @@ import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Video;
+import android.util.Log;
 
+import com.wotu.R;
+import com.wotu.app.DataManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.common.Future;
 import com.wotu.common.FutureListener;
 import com.wotu.common.ThreadPool;
-import com.wotu.common.WLog;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.data.DataManager;
 import com.wotu.data.DataNotifier;
 import com.wotu.data.MediaObject;
-import com.wotu.data.MediaPath;
-import com.wotu.data.MediaSetObject;
+import com.wotu.data.MediaSet;
+import com.wotu.data.MediaSetUtils;
+import com.wotu.data.Path;
 import com.wotu.util.UtilsBase;
-import com.wotu.util.UtilsMedia;
-import com.wotu.R;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 
-public class LocalImageSetList extends MediaSetObject implements FutureListener<ArrayList<MediaSetObject>> {
+// LocalAlbumSet lists all image or video albums in the local storage.
+// The path should be "/local/image", "local/video" or "/local/all"
+public class LocalAlbumSet extends MediaSet implements
+        FutureListener<ArrayList<MediaSet>> {
+    public static final String PATH_IMAGE = "/local/image/";
+    public static final String PATH_VIDEO = "/local/video/";
 
-    private static final String TAG = "ImageSetMgr";
+    private static final String TAG = "LocalAlbumSet";
     private static final String EXTERNAL_MEDIA = "external";
 
+    // The indices should match the following projections.
     private static final int INDEX_BUCKET_ID = 0;
+    private static final int INDEX_MEDIA_TYPE = 1;
     private static final int INDEX_BUCKET_NAME = 2;
 
     private static final Uri mBaseUri = Files.getContentUri(EXTERNAL_MEDIA);
     private static final Uri mWatchUriImage = Images.Media.EXTERNAL_CONTENT_URI;
+    private static final Uri mWatchUriVideo = Video.Media.EXTERNAL_CONTENT_URI;
 
     // BUCKET_DISPLAY_NAME is a string like "Camera" which is the directory
     // name of where an image or video is in. BUCKET_ID is a hash of the path
@@ -58,8 +65,7 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
     // MediaStore.
     private static final String[] PROJECTION_BUCKET = {
             ImageColumns.BUCKET_ID,
-            FileColumns.MEDIA_TYPE,
-            ImageColumns.BUCKET_DISPLAY_NAME
+            FileColumns.MEDIA_TYPE, ImageColumns.BUCKET_DISPLAY_NAME
     };
 
     // We want to order the albums by reverse chronological order. We abuse the
@@ -74,33 +80,40 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
     private static final String BUCKET_GROUP_BY = "1) GROUP BY 1,(2";
     private static final String BUCKET_ORDER_BY = "MAX(datetaken) DESC";
 
-    private final WoTuApp mApp;
-    private ArrayList<MediaSetObject> mAlbums = new ArrayList<MediaSetObject>();
+    private final WoTuApp mApplication;
+    private final int mType;
+    private ArrayList<MediaSet> mAlbums = new ArrayList<MediaSet>();
     private final DataNotifier mNotifierImage;
+    private final DataNotifier mNotifierVideo;
     private final String mName;
     private final Handler mHandler;
     private boolean mIsLoading;
 
-    private Future<ArrayList<MediaSetObject>> mLoadTask;
-    private ArrayList<MediaSetObject> mLoadBuffer;
+    private Future<ArrayList<MediaSet>> mLoadTask;
+    private ArrayList<MediaSet> mLoadBuffer;
 
-    public LocalImageSetList(MediaPath path, WoTuApp application) {
+    public LocalAlbumSet(Path path, WoTuApp application) {
         super(path, nextVersionNumber());
-        mApp = application;
+        mApplication = application;
         mHandler = new Handler(application.getMainLooper());
+        mType = path.getMediaType();
         mNotifierImage = new DataNotifier(this, mWatchUriImage, application);
+        mNotifierVideo = new DataNotifier(this, mWatchUriVideo, application);
         mName = application.getResources().getString(
-                R.string.set_label_albums);
+                R.string.set_label_local_albums);
     }
 
-    public MediaSetObject getSubMediaSet(int index) {
+    @Override
+    public MediaSet getSubMediaSet(int index) {
         return mAlbums.get(index);
     }
 
+    @Override
     public int getSubMediaSetCount() {
         return mAlbums.size();
     }
 
+    @Override
     public String getName() {
         return mName;
     }
@@ -108,27 +121,35 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
     private BucketEntry[] loadBucketEntries(JobContext jc) {
         Uri uri = mBaseUri;
 
-        WLog.v("DebugLoadingTime", "start quering media provider");
-        Cursor cursor = mApp.getContentResolver().query(uri,
+        Log.v("DebugLoadingTime", "start quering media provider");
+        Cursor cursor = mApplication.getContentResolver().query(uri,
                 PROJECTION_BUCKET, BUCKET_GROUP_BY, null, BUCKET_ORDER_BY);
         if (cursor == null) {
-            WLog.w(TAG, "cannot open local database: " + uri);
+            Log.w(TAG, "cannot open local database: " + uri);
             return new BucketEntry[0];
         }
         ArrayList<BucketEntry> buffer = new ArrayList<BucketEntry>();
-
+        int typeBits = 0;
+        if ((mType & MEDIA_TYPE_IMAGE) != 0) {
+            typeBits |= (1 << FileColumns.MEDIA_TYPE_IMAGE);
+        }
+        if ((mType & MEDIA_TYPE_VIDEO) != 0) {
+            typeBits |= (1 << FileColumns.MEDIA_TYPE_VIDEO);
+        }
         try {
             while (cursor.moveToNext()) {
+                if ((typeBits & (1 << cursor.getInt(INDEX_MEDIA_TYPE))) != 0) {
                     BucketEntry entry = new BucketEntry(
                             cursor.getInt(INDEX_BUCKET_ID),
                             cursor.getString(INDEX_BUCKET_NAME));
                     if (!buffer.contains(entry)) {
                         buffer.add(entry);
                     }
+                }
                 if (jc.isCancelled())
                     return null;
             }
-            WLog.v("DebugLoadingTime", "got " + buffer.size() + " buckets");
+            Log.v("DebugLoadingTime", "got " + buffer.size() + " buckets");
         } finally {
             cursor.close();
         }
@@ -143,11 +164,11 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
         return -1;
     }
 
-    private class AlbumsLoader implements ThreadPool.Job<ArrayList<MediaSetObject>> {
+    private class AlbumsLoader implements ThreadPool.Job<ArrayList<MediaSet>> {
 
         @Override
         @SuppressWarnings("unchecked")
-        public ArrayList<MediaSetObject> run(JobContext jc) {
+        public ArrayList<MediaSet> run(JobContext jc) {
             // Note: it will be faster if we only select media_type and
             // bucket_id.
             // need to test the performance if that is worth
@@ -159,27 +180,38 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
             int offset = 0;
             // Move camera and download bucket to the front, while keeping the
             // order of others.
-            int index = findBucket(entries, UtilsMedia.CAMERA_BUCKET_ID);
+            int index = findBucket(entries, MediaSetUtils.CAMERA_BUCKET_ID);
             if (index != -1) {
                 circularShiftRight(entries, offset++, index);
             }
-            index = findBucket(entries, UtilsMedia.DOWNLOAD_BUCKET_ID);
+            index = findBucket(entries, MediaSetUtils.DOWNLOAD_BUCKET_ID);
             if (index != -1) {
                 circularShiftRight(entries, offset++, index);
             }
 
-            ArrayList<MediaSetObject> albums = new ArrayList<MediaSetObject>();
-            DataManager dataManager = mApp.getDataManager();
+            ArrayList<MediaSet> albums = new ArrayList<MediaSet>();
+            DataManager dataManager = mApplication.getDataManager();
             for (BucketEntry entry : entries) {
-                MediaSetObject album = getLocalAlbum(dataManager, 0, mPath,
-                        entry.bucketId, entry.bucketName);
+                MediaSet album = getLocalAlbum(dataManager, mType, entry.bucketId, entry.bucketName);
                 albums.add(album);
             }
             return albums;
         }
     }
 
-    public static String getBucketName(ContentResolver resolver, int bucketId) {
+    private MediaSet getLocalAlbum(DataManager manager, int type, long id, String name) {
+        synchronized (DataManager.LOCK) {
+            switch (type) {
+                case MEDIA_TYPE_IMAGE:
+                    return new LocalAlbum(new Path(PATH_IMAGE, id), mApplication, id, true, name);
+                case MEDIA_TYPE_VIDEO:
+                    return new LocalAlbum(new Path(PATH_VIDEO, id), mApplication, id, false, name);
+            }
+            throw new IllegalArgumentException(String.valueOf(type));
+        }
+    }
+
+    public static String getBucketName(ContentResolver resolver, long bucketId) {
         Uri uri = mBaseUri.buildUpon().appendQueryParameter("limit", "1")
                 .build();
 
@@ -189,7 +221,7 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
                 }, null);
 
         if (cursor == null) {
-            WLog.w(TAG, "query fail: " + uri);
+            Log.w(TAG, "query fail: " + uri);
             return "";
         }
         try {
@@ -215,33 +247,33 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
     // 2. Prevent calling onFutureDone() and reload() concurrently
     public synchronized long reload() {
         // "|" is used instead of "||" because we want to clear both flags.
-        if (mNotifierImage.isDirty()) {
+        if (mNotifierImage.isDirty() | mNotifierVideo.isDirty()) {
             if (mLoadTask != null)
                 mLoadTask.cancel();
             mIsLoading = true;
-            mLoadTask = mApp.getThreadPool().submit(new AlbumsLoader(),
+            mLoadTask = mApplication.getThreadPool().submit(new AlbumsLoader(),
                     this);
         }
         if (mLoadBuffer != null) {
             mAlbums = mLoadBuffer;
             mLoadBuffer = null;
-            for (MediaSetObject album : mAlbums) {
+            for (MediaSet album : mAlbums) {
                 album.reload();
             }
-            WLog.i("test-r", "enter reload()-2:" + mDataVersion);
+            Log.i("test-r", "enter reload()-2:" + mDataVersion);
             mDataVersion = nextVersionNumber();
         }
         return mDataVersion;
     }
 
     @Override
-    public synchronized void onFutureDone(Future<ArrayList<MediaSetObject>> future) {
+    public synchronized void onFutureDone(Future<ArrayList<MediaSet>> future) {
         if (mLoadTask != future)
             return; // ignore, wait for the latest task
         mLoadBuffer = future.get();
         mIsLoading = false;
         if (mLoadBuffer == null)
-            mLoadBuffer = new ArrayList<MediaSetObject>();
+            mLoadBuffer = new ArrayList<MediaSet>();
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -253,6 +285,7 @@ public class LocalImageSetList extends MediaSetObject implements FutureListener<
     // For debug only. Fake there is a ContentObserver.onChange() event.
     void fakeChange() {
         mNotifierImage.fakeChange();
+        mNotifierVideo.fakeChange();
     }
 
     private static class BucketEntry {
