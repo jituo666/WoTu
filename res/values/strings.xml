@@ -25,5 +25,5 @@
          viewing albums stored locally on the device [CHAR LIMIT=20]
     -->
     <string name="set_label_local_albums">本地集锦</string>
-
+    <string name="no_such_item">没有这一项.</string>
 </resources>
