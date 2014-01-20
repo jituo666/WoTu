@@ -1,4 +1,4 @@
-package com.wotu.animation;
+package com.wotu.anim;
 
 import android.view.animation.Interpolator;
 

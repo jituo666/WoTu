@@ -2,7 +2,7 @@ package com.wotu.view.opengl;
 
 import android.graphics.Matrix;
 
-import com.wotu.animation.CanvasAnimation;
+import com.wotu.anim.CanvasAnimation;
 import com.wotu.view.GLView;
 import com.wotu.view.OrientationSource;
 

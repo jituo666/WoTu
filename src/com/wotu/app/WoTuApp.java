@@ -1,4 +1,3 @@
-
 package com.wotu.app;
 
 import android.content.ContentResolver;
@@ -7,6 +6,7 @@ import android.content.res.Resources;
 import android.os.Looper;
 
 import com.wotu.common.ThreadPool;
+import com.wotu.data.cache.ImageCacheService;
 
 public interface WoTuApp {
     public Context getAndroidContext();
@@ -20,4 +20,6 @@ public interface WoTuApp {
     public Looper getMainLooper();
 
     public ThreadPool getThreadPool();
+
+    public ImageCacheService getImageCacheService();
 }

@@ -1,0 +1,6 @@
+1,Git怎么查看某次提交某个文件的修改:
+git show [commit]
+git log -p
+git whatchanged
+git log | grep -rn [commit]
+

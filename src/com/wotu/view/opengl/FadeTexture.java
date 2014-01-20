@@ -1,6 +1,6 @@
 package com.wotu.view.opengl;
 
-import com.wotu.util.AnimTimer;
+import com.wotu.anim.AnimTimer;
 import com.wotu.util.UtilsBase;
 
 // FadeTexture is a texture which fades the given texture along the time.

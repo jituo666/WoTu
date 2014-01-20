@@ -16,6 +16,7 @@ import com.wotu.common.WLog;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
+import com.wotu.data.cache.ImageCacheRequest;
 import com.wotu.data.image.LocalMediaItem;
 import com.wotu.data.source.LocalAlbum;
 import com.wotu.data.utils.BitmapUtils;

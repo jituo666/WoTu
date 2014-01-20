@@ -1,4 +1,4 @@
-package com.wotu.animation;
+package com.wotu.anim;
 
 import com.wotu.util.UtilsBase;
 import com.wotu.view.opengl.GLCanvas;

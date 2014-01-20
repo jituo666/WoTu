@@ -1,4 +1,4 @@
-package com.wotu.util;
+package com.wotu.anim;
 
 import android.os.SystemClock;
 
