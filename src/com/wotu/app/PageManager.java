@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import java.util.Stack;
 
@@ -12,9 +14,9 @@ import com.wotu.activity.WoTuContext;
 import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 
-public class StateManager {
+public class PageManager {
     @SuppressWarnings("unused")
-    private static final String TAG = "StateManager";
+    private static final String TAG = "PageManager";
     private boolean mIsResumed = false;
 
     private static final String KEY_MAIN = "activity-state";
@@ -24,23 +26,23 @@ public class StateManager {
 
     private WoTuContext mContext;
     private Stack<StateEntry> mStack = new Stack<StateEntry>();
-    private ActivityState.ResultEntry mResult;
+    private PageState.ResultEntry mResult;
 
-    public StateManager(WoTuContext context) {
+    public PageManager(WoTuContext context) {
         mContext = context;
     }
 
-    public void startState(Class<? extends ActivityState> klass,
+    public void startState(Class<? extends PageState> klass,
             Bundle data) {
         WLog.v(TAG, "startState " + klass);
-        ActivityState state = null;
+        PageState state = null;
         try {
             state = klass.newInstance();
         } catch (Exception e) {
             throw new AssertionError(e);
         }
         if (!mStack.isEmpty()) {
-            ActivityState top = getTopState();
+            PageState top = getTopState();
             if (mIsResumed) top.onPause();
         }
         state.initialize(mContext, data);
@@ -50,21 +52,21 @@ public class StateManager {
         if (mIsResumed) state.resume();
     }
 
-    public void startStateForResult(Class<? extends ActivityState> klass,
+    public void startStateForResult(Class<? extends PageState> klass,
             int requestCode, Bundle data) {
         WLog.v(TAG, "startStateForResult " + klass + ", " + requestCode);
-        ActivityState state = null;
+        PageState state = null;
         try {
             state = klass.newInstance();
         } catch (Exception e) {
             throw new AssertionError(e);
         }
         state.initialize(mContext, data);
-        state.mResult = new ActivityState.ResultEntry();
+        state.mResult = new PageState.ResultEntry();
         state.mResult.requestCode = requestCode;
 
         if (!mStack.isEmpty()) {
-            ActivityState as = getTopState();
+            PageState as = getTopState();
             as.mReceivedResults = state.mResult;
             if (mIsResumed) as.onPause();
         } else {
@@ -129,7 +131,7 @@ public class StateManager {
         }
     }
 
-    void finishState(ActivityState state) {
+    void finishState(PageState state) {
         // The finish() request could be rejected (only happens under Monkey),
         // If it is rejected, we won't close the last page.
         if (mStack.size() == 1) {
@@ -166,13 +168,13 @@ public class StateManager {
 
         if (!mStack.isEmpty()) {
             // Restore the immediately previous state
-            ActivityState top = mStack.peek().activityState;
+            PageState top = mStack.peek().activityState;
             if (mIsResumed) top.resume();
         }
     }
 
-    void switchState(ActivityState oldState,
-            Class<? extends ActivityState> klass, Bundle data) {
+    void switchState(PageState oldState,
+            Class<? extends PageState> klass, Bundle data) {
         WLog.v(TAG, "switchState " + oldState + ", " + klass);
         if (oldState != mStack.peek().activityState) {
             throw new IllegalArgumentException("The stateview to be finished"
@@ -185,7 +187,7 @@ public class StateManager {
         oldState.onDestroy();
 
         // Create new state.
-        ActivityState state = null;
+        PageState state = null;
         try {
             state = klass.newInstance();
         } catch (Exception e) {
@@ -211,13 +213,13 @@ public class StateManager {
         Parcelable list[] = inState.getParcelableArray(KEY_MAIN);
         for (Parcelable parcelable : list) {
             Bundle bundle = (Bundle) parcelable;
-            Class<? extends ActivityState> klass =
-                    (Class<? extends ActivityState>) bundle.getSerializable(KEY_CLASS);
+            Class<? extends PageState> klass =
+                    (Class<? extends PageState>) bundle.getSerializable(KEY_CLASS);
 
             Bundle data = bundle.getBundle(KEY_DATA);
             Bundle state = bundle.getBundle(KEY_STATE);
 
-            ActivityState activityState;
+            PageState activityState;
             try {
                 WLog.v(TAG, "restoreFromState " + klass);
                 activityState = klass.newInstance();
@@ -248,7 +250,7 @@ public class StateManager {
         outState.putParcelableArray(KEY_MAIN, list);
     }
 
-    public boolean hasStateClass(Class<? extends ActivityState> klass) {
+    public boolean hasStateClass(Class<? extends PageState> klass) {
         for (StateEntry entry : mStack) {
             if (klass.isInstance(entry.activityState)) {
                 return true;
@@ -257,16 +259,16 @@ public class StateManager {
         return false;
     }
 
-    public ActivityState getTopState() {
+    public PageState getTopState() {
         UtilsBase.assertTrue(!mStack.isEmpty());
         return mStack.peek().activityState;
     }
 
     private static class StateEntry {
         public Bundle data;
-        public ActivityState activityState;
+        public PageState activityState;
 
-        public StateEntry(Bundle data, ActivityState state) {
+        public StateEntry(Bundle data, PageState state) {
             this.data = data;
             this.activityState = state;
         }

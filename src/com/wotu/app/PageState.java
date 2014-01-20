@@ -1,9 +1,9 @@
+
 package com.wotu.app;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.view.GLView;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,21 +14,20 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
-abstract public class ActivityState {
+abstract public class PageState {
     protected static final int FLAG_HIDE_ACTION_BAR = 1;
     protected static final int FLAG_HIDE_STATUS_BAR = 2;
     protected static final int FLAG_SCREEN_ON_WHEN_PLUGGED = 4;
     protected static final int FLAG_SCREEN_ON_ALWAYS = 8;
 
     private static final int SCREEN_ON_FLAGS = (
-              WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-            | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
-            | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-        );
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                    | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+                    | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+            );
 
     protected WoTuContext mContext;
     protected Bundle mData;
@@ -47,7 +46,7 @@ abstract public class ActivityState {
     private boolean mPlugged = false;
     boolean mIsFinishing = false;
 
-    protected ActivityState() {
+    protected PageState() {
     }
 
     protected void setContentPane(GLView content) {
@@ -64,11 +63,12 @@ abstract public class ActivityState {
     }
 
     protected void onBackPressed() {
-        mContext.getStateManager().finishState(this);
+        mContext.getPageManager().finishState(this);
     }
 
     protected void setStateResult(int resultCode, Intent data) {
-        if (mResult == null) return;
+        if (mResult == null)
+            return;
         mResult.resultCode = resultCode;
         mResult.resultData = data;
     }
@@ -118,24 +118,10 @@ abstract public class ActivityState {
         }
     }
 
-    // should only be called by StateManager
+    // should only be called by PageManager
     void resume() {
         Activity activity = (Activity) mContext;
-        ActionBar actionBar = activity.getActionBar();
-        if (actionBar != null) {
-            if ((mFlags & FLAG_HIDE_ACTION_BAR) != 0) {
-                actionBar.hide();
-            } else {
-                actionBar.show();
-            }
-            int stateCount = mContext.getStateManager().getStateCount();
-            mContext.getGalleryActionBar().setDisplayOptions(stateCount > 1, true);
-            // Default behavior, this can be overridden in ActivityState's onResume.
-            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        }
-
         activity.invalidateOptionsMenu();
-
         setScreenOnFlags();
 
         boolean lightsOut = ((mFlags & FLAG_HIDE_STATUS_BAR) != 0);
@@ -164,8 +150,6 @@ abstract public class ActivityState {
     }
 
     protected boolean onCreateActionBar(Menu menu) {
-        // TODO: we should return false if there is no menu to show
-        //       this is a workaround for a bug in system
         return true;
     }
 
