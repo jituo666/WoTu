@@ -6,7 +6,7 @@ import android.os.SystemClock;
 import android.view.MotionEvent;
 
 import com.wotu.anim.AnimTimer;
-import com.wotu.anim.CanvasAnimation;
+import com.wotu.anim.CanvasAnim;
 import com.wotu.common.WLog;
 import com.wotu.util.UtilsBase;
 import com.wotu.view.opengl.GLCanvas;
@@ -29,7 +29,7 @@ public class GLView {
     protected GLView mParent;
     private GLView mMotionTarget;
     private ArrayList<GLView> mChilds;
-    private CanvasAnimation mAnimation;
+    private CanvasAnim mAnimation;
 
     private int mViewFlags = 0;
 
@@ -66,7 +66,7 @@ public class GLView {
 
         canvas.translate(xoffset, yoffset);
 
-        CanvasAnimation anim = component.mAnimation;
+        CanvasAnim anim = component.mAnimation;
         if (anim != null) {
             canvas.save(anim.getCanvasSaveFlags());
             if (anim.calculate(AnimTimer.get())) {
@@ -94,7 +94,7 @@ public class GLView {
             root.requestRender();
     }
 
-    public void startAnimation(CanvasAnimation animation) {
+    public void startAnimation(CanvasAnim animation) {
         GLRoot root = getGLRoot();
         if (root == null)
             throw new IllegalStateException();

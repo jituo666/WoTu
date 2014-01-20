@@ -1,12 +1,12 @@
 package com.wotu.anim;
 
-public class FloatAnimation extends Animation {
+public class FloatAnim extends Animation {
 
     private final float mFrom;
     private final float mTo;
     private float mCurrent;
 
-    public FloatAnimation(float from, float to, int duration) {
+    public FloatAnim(float from, float to, int duration) {
         mFrom = from;
         mTo = to;
         mCurrent = from;

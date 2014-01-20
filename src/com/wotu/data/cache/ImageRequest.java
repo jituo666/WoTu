@@ -12,7 +12,7 @@ import com.wotu.data.utils.BitmapUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-public abstract class ImageCacheRequest implements Job<Bitmap> {
+public abstract class ImageRequest implements Job<Bitmap> {
     private static final String TAG = "ImageCacheRequest";
 
     protected WoTuApp mApplication;
@@ -20,7 +20,7 @@ public abstract class ImageCacheRequest implements Job<Bitmap> {
     private int mType;
     private int mTargetSize;
 
-    public ImageCacheRequest(WoTuApp application,
+    public ImageRequest(WoTuApp application,
             Path path, int type, int targetSize) {
         mApplication = application;
         mPath = path;
@@ -33,7 +33,7 @@ public abstract class ImageCacheRequest implements Job<Bitmap> {
         String debugTag = mPath + "," +
                  ((mType == MediaItem.TYPE_THUMBNAIL) ? "THUMB" :
                  (mType == MediaItem.TYPE_MICROTHUMBNAIL) ? "MICROTHUMB" : "?");
-        ImageCacheService cacheService = mApplication.getImageCacheService();
+        ImageCacher cacheService = mApplication.getImageCacheService();
 
         BytesBuffer buffer = MediaItem.getBytesBufferPool().get();
         try {
@@ -53,7 +53,6 @@ public abstract class ImageCacheRequest implements Job<Bitmap> {
                 if (bitmap == null && !jc.isCancelled()) {
                     WLog.w(TAG, "decode cached failed " + debugTag);
                 }
-                //WLog.i("albumTag", "-------------------------------------ImageCacheRequest:----1-found" + mPath);
                 return bitmap;
             }
         } finally {

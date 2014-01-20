@@ -16,12 +16,11 @@ import com.wotu.common.WLog;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
-import com.wotu.data.cache.ImageCacheRequest;
+import com.wotu.data.cache.ImageRequest;
 import com.wotu.data.image.LocalMediaItem;
 import com.wotu.data.source.LocalAlbum;
 import com.wotu.data.utils.BitmapUtils;
 import com.wotu.util.UpdateHelper;
-import com.wotu.util.UtilsBase;
 import com.wotu.util.UtilsCom;
 
 // LocalVideo represents a video in the local storage.
@@ -149,7 +148,7 @@ public class LocalVideo extends LocalMediaItem {
         return new LocalVideoRequest(mApplication, getPath(), type, filePath);
     }
 
-    public static class LocalVideoRequest extends ImageCacheRequest {
+    public static class LocalVideoRequest extends ImageRequest {
         private String mLocalFilePath;
 
         LocalVideoRequest(WoTuApp application, Path path, int type,

@@ -11,7 +11,7 @@ import com.wotu.data.cache.BlobCache.LookupRequest;
 import com.wotu.util.UtilsBase;
 import com.wotu.util.UtilsCom;
 
-public class ImageCacheService {
+public class ImageCacher {
     @SuppressWarnings("unused")
     private static final String TAG = "ImageCacheService";
 
@@ -22,7 +22,7 @@ public class ImageCacheService {
 
     private BlobCache mCache;
 
-    public ImageCacheService(Context context) {
+    public ImageCacher(Context context) {
         mCache = CacheManager.getCache(context, IMAGE_CACHE_FILE,
                 IMAGE_CACHE_MAX_ENTRIES, IMAGE_CACHE_MAX_BYTES,
                 IMAGE_CACHE_VERSION);

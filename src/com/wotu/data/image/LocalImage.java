@@ -18,7 +18,7 @@ import com.wotu.common.WLog;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
-import com.wotu.data.cache.ImageCacheRequest;
+import com.wotu.data.cache.ImageRequest;
 import com.wotu.data.source.LocalAlbum;
 import com.wotu.data.utils.BitmapUtils;
 import com.wotu.data.utils.DecodeUtils;
@@ -141,7 +141,7 @@ public class LocalImage extends LocalMediaItem {
         return new LocalImageRequest(mApplication, mPath, type, filePath);
     }
 
-    public static class LocalImageRequest extends ImageCacheRequest {
+    public static class LocalImageRequest extends ImageRequest {
         private String mLocalFilePath;
 
         LocalImageRequest(WoTuApp application, Path path, int type,

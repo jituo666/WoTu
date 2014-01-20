@@ -1,7 +1,7 @@
 package com.wotu.app;
 
 import com.wotu.common.ThreadPool;
-import com.wotu.data.cache.ImageCacheService;
+import com.wotu.data.cache.ImageCacher;
 
 import android.app.Application;
 import android.content.ContentResolver;
@@ -12,7 +12,7 @@ import android.os.Looper;
 public class WoTuAppImpl extends Application implements WoTuApp {
 
     private Object mLock = new Object();
-    private ImageCacheService mImageCacheService;
+    private ImageCacher mImageCacheService;
     private DataManager mDataManager;
     private ThreadPool mThreadPool;
 
@@ -53,11 +53,11 @@ public class WoTuAppImpl extends Application implements WoTuApp {
     }
 
     @Override
-    public ImageCacheService getImageCacheService() {
+    public ImageCacher getImageCacheService() {
         // This method may block on file I/O so a dedicated lock is needed here.
         synchronized (mLock) {
             if (mImageCacheService == null) {
-                mImageCacheService = new ImageCacheService(getAndroidContext());
+                mImageCacheService = new ImageCacher(getAndroidContext());
             }
             return mImageCacheService;
         }

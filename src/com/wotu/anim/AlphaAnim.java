@@ -4,12 +4,12 @@ import com.wotu.util.UtilsBase;
 import com.wotu.view.opengl.GLCanvas;
 
 
-public class AlphaAnimation extends CanvasAnimation {
+public class AlphaAnim extends CanvasAnim {
     private final float mStartAlpha;
     private final float mEndAlpha;
     private float mCurrentAlpha;
 
-    public AlphaAnimation(float from, float to) {
+    public AlphaAnim(float from, float to) {
         mStartAlpha = from;
         mEndAlpha = to;
         mCurrentAlpha = from;

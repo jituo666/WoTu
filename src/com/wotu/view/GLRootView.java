@@ -12,7 +12,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
 import com.wotu.anim.AnimTimer;
-import com.wotu.anim.CanvasAnimation;
+import com.wotu.anim.CanvasAnim;
 import com.wotu.common.WLog;
 import com.wotu.util.UtilsBase;
 import com.wotu.view.opengl.BasicTexture;
@@ -57,7 +57,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLRoot {
     private GLView mContentView;
     private boolean mInDownState = false;
 
-    private final ArrayList<CanvasAnimation> mAnimations = new ArrayList<CanvasAnimation>();
+    private final ArrayList<CanvasAnim> mAnimations = new ArrayList<CanvasAnim>();
     private final ArrayDeque<OnGLIdleListener> mIdleListeners = new ArrayDeque<OnGLIdleListener>();
     private final IdleRunner mIdleRunner = new IdleRunner();
 
@@ -329,7 +329,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLRoot {
     }
 
     @Override
-    public void registerLaunchedAnimation(CanvasAnimation animation) {
+    public void registerLaunchedAnimation(CanvasAnim animation) {
         mAnimations.add(animation);
     }
 
