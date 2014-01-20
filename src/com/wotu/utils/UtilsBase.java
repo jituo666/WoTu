@@ -1,4 +1,4 @@
-package com.wotu.util;
+package com.wotu.utils;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;

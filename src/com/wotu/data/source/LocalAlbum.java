@@ -22,8 +22,8 @@ import com.wotu.data.Path;
 import com.wotu.data.image.LocalImage;
 import com.wotu.data.image.LocalMediaItem;
 import com.wotu.data.video.LocalVideo;
-import com.wotu.util.UtilsBase;
-import com.wotu.util.UtilsCom;
+import com.wotu.utils.UtilsBase;
+import com.wotu.utils.UtilsCom;
 
 import java.util.ArrayList;
 

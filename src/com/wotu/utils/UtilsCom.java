@@ -1,5 +1,5 @@
 
-package com.wotu.util;
+package com.wotu.utils;
 
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;

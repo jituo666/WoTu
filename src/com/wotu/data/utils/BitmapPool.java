@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory.Options;
 
 import com.wotu.common.WLog;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.io.FileDescriptor;
 import java.util.ArrayList;

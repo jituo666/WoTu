@@ -5,8 +5,8 @@ import android.opengl.GLU;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.wotu.util.IntArray;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.IntArray;
+import com.wotu.utils.UtilsBase;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

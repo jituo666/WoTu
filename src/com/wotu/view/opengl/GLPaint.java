@@ -1,6 +1,6 @@
 package com.wotu.view.opengl;
 
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 
 

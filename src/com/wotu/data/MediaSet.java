@@ -3,7 +3,7 @@ package com.wotu.data;
 
 import com.wotu.common.Future;
 import com.wotu.common.WLog;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.util.ArrayList;
 import java.util.WeakHashMap;

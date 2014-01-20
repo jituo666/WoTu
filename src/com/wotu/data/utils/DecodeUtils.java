@@ -11,7 +11,7 @@ import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
 import com.wotu.common.WLog;
 import com.wotu.data.MediaItem;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;

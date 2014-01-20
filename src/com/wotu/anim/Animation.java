@@ -2,7 +2,7 @@ package com.wotu.anim;
 
 import android.view.animation.Interpolator;
 
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 
 // Animation calculates a value according to the current input time.

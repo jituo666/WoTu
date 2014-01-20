@@ -5,7 +5,7 @@ import android.database.Cursor;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
-import com.wotu.util.UtilsCom;
+import com.wotu.utils.UtilsCom;
 
 import java.text.DateFormat;
 import java.util.Date;

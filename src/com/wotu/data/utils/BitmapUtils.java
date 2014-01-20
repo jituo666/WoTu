@@ -10,7 +10,7 @@ import android.os.Build;
 import android.util.FloatMath;
 
 import com.wotu.common.WLog;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;

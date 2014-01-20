@@ -1,7 +1,7 @@
 
 package com.wotu.data;
 
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.lang.ref.WeakReference;
 

@@ -20,8 +20,8 @@ import com.wotu.data.cache.ImageRequest;
 import com.wotu.data.image.LocalMediaItem;
 import com.wotu.data.source.LocalAlbum;
 import com.wotu.data.utils.BitmapUtils;
-import com.wotu.util.UpdateHelper;
-import com.wotu.util.UtilsCom;
+import com.wotu.utils.UpdateHelper;
+import com.wotu.utils.UtilsCom;
 
 // LocalVideo represents a video in the local storage.
 public class LocalVideo extends LocalMediaItem {

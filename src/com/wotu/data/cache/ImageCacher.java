@@ -8,8 +8,8 @@ import java.nio.ByteBuffer;
 import com.wotu.common.BytesBufferPool.BytesBuffer;
 import com.wotu.data.Path;
 import com.wotu.data.cache.BlobCache.LookupRequest;
-import com.wotu.util.UtilsBase;
-import com.wotu.util.UtilsCom;
+import com.wotu.utils.UtilsBase;
+import com.wotu.utils.UtilsCom;
 
 public class ImageCacher {
     @SuppressWarnings("unused")

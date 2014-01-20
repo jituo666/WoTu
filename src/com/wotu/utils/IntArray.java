@@ -1,4 +1,4 @@
-package com.wotu.util;
+package com.wotu.utils;
 
 public class IntArray {
     private static final int INIT_CAPACITY = 8;

@@ -14,7 +14,7 @@ import android.view.SurfaceHolder;
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.CanvasAnim;
 import com.wotu.common.WLog;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.BasicTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.GLCanvasImpl;

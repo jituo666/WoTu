@@ -1,4 +1,4 @@
-package com.wotu.util;
+package com.wotu.utils;
 
 public class UpdateHelper {
 

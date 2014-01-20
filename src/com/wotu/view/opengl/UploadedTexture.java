@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.opengl.GLUtils;
 
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.util.HashMap;
 

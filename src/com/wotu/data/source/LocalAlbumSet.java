@@ -23,7 +23,7 @@ import com.wotu.data.MediaObject;
 import com.wotu.data.MediaSet;
 import com.wotu.data.MediaSetUtils;
 import com.wotu.data.Path;
-import com.wotu.util.UtilsBase;
+import com.wotu.utils.UtilsBase;
 
 import java.util.ArrayList;
 
