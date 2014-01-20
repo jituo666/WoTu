@@ -1,6 +1,7 @@
 package com.wotu.app;
 
 import com.wotu.common.ThreadPool;
+import com.wotu.data.DataManager;
 import com.wotu.data.cache.ImageCacher;
 
 import android.app.Application;

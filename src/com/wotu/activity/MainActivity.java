@@ -1,5 +1,5 @@
 
-package com.wotu.app;
+package com.wotu.activity;
 
 import android.os.Bundle;
 import android.app.Activity;

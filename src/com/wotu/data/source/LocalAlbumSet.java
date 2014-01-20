@@ -12,12 +12,12 @@ import android.provider.MediaStore.Video;
 import android.util.Log;
 
 import com.wotu.R;
-import com.wotu.app.DataManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.common.Future;
 import com.wotu.common.FutureListener;
 import com.wotu.common.ThreadPool;
 import com.wotu.common.ThreadPool.JobContext;
+import com.wotu.data.DataManager;
 import com.wotu.data.DataNotifier;
 import com.wotu.data.MediaObject;
 import com.wotu.data.MediaSet;

@@ -7,23 +7,14 @@ import android.content.UriMatcher;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-import com.wotu.app.DataManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.common.WLog;
-import com.wotu.data.MediaItem;
 import com.wotu.data.MediaObject;
-import com.wotu.data.MediaSet;
-import com.wotu.data.MediaSet.ItemConsumer;
 import com.wotu.data.MediaSource;
 import com.wotu.data.Path;
 import com.wotu.data.PathMatcher;
 import com.wotu.data.image.LocalImage;
-import com.wotu.data.image.LocalMediaItem;
 import com.wotu.data.video.LocalVideo;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class LocalSource extends MediaSource {
 

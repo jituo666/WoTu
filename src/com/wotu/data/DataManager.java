@@ -1,5 +1,5 @@
 
-package com.wotu.app;
+package com.wotu.data;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -7,11 +7,6 @@ import java.util.WeakHashMap;
 
 import com.wotu.app.WoTuApp;
 import com.wotu.common.WLog;
-import com.wotu.data.DataNotifier;
-import com.wotu.data.MediaObject;
-import com.wotu.data.MediaSet;
-import com.wotu.data.MediaSource;
-import com.wotu.data.Path;
 import com.wotu.data.source.LocalSource;
 
 import android.content.Intent;

@@ -11,9 +11,9 @@ import android.provider.MediaStore.Video;
 import android.provider.MediaStore.Video.VideoColumns;
 
 import com.wotu.R;
-import com.wotu.app.DataManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.common.WLog;
+import com.wotu.data.DataManager;
 import com.wotu.data.DataNotifier;
 import com.wotu.data.MediaItem;
 import com.wotu.data.MediaSet;

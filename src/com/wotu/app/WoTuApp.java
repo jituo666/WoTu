@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.os.Looper;
 
 import com.wotu.common.ThreadPool;
+import com.wotu.data.DataManager;
 import com.wotu.data.cache.ImageCacher;
 
 public interface WoTuApp {
