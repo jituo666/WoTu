@@ -1,13 +1,13 @@
-package com.wotu.view.opengl;
+package com.wotu.view;
 
 import android.graphics.Matrix;
 
+import com.wotu.activity.OrientationSource;
 import com.wotu.anim.CanvasAnim;
-import com.wotu.view.GLView;
-import com.wotu.view.OrientationSource;
+import com.wotu.view.opengl.GLCanvas;
 
 
-public interface GLRoot {
+public interface GLHandler {
 
     // Listener will be called when GL is idle AND before each frame.
     // Mainly used for uploading textures.

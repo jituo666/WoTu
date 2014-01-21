@@ -1,4 +1,4 @@
-package com.wotu.view;
+package com.wotu.activity;
 
 import android.app.Activity;
 import android.content.ContentResolver;

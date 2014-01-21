@@ -10,7 +10,6 @@ import com.wotu.anim.CanvasAnim;
 import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.GLCanvas;
-import com.wotu.view.opengl.GLRoot;
 
 import java.util.ArrayList;
 
@@ -25,7 +24,7 @@ public class GLView {
     private static final int FLAG_SET_MEASURED_SIZE = 2;
     private static final int FLAG_LAYOUT_REQUESTED = 4;
 
-    private GLRoot mRoot;
+    private GLHandler mRoot;
     protected GLView mParent;
     private GLView mMotionTarget;
     private ArrayList<GLView> mChilds;
@@ -82,20 +81,20 @@ public class GLView {
         canvas.translate(-xoffset, -yoffset);
     }
 
-    public GLRoot getGLRoot() {
+    public GLHandler getGLRoot() {
         return mRoot;
     }
 
     // Request re-rendering of the view hierarchy.
     // This is used for animation or when the contents changed.
     public void invalidate() {
-        GLRoot root = getGLRoot();
+        GLHandler root = getGLRoot();
         if (root != null)
             root.requestRender();
     }
 
     public void startAnimation(CanvasAnim animation) {
-        GLRoot root = getGLRoot();
+        GLHandler root = getGLRoot();
         if (root == null)
             throw new IllegalStateException();
         mAnimation = animation;
@@ -169,7 +168,7 @@ public class GLView {
             mParent.requestLayout();
         } else {
             // Is this a content pane ?
-            GLRoot root = getGLRoot();
+            GLHandler root = getGLRoot();
             if (root != null)
                 root.requestLayoutContentPane();
         }
@@ -298,7 +297,7 @@ public class GLView {
     }
 
     // This should only be called on the content pane (the topmost GLView).
-    public void attachToRoot(GLRoot root) {
+    public void attachToRoot(GLHandler root) {
         UtilsBase.assertTrue(mParent == null && mRoot == null); //必须是根GLview才可以从外部调用attach
         onAttachToRoot(root);
     }
@@ -309,7 +308,7 @@ public class GLView {
         onDetachFromRoot();
     }
 
-    protected void onAttachToRoot(GLRoot root) {
+    protected void onAttachToRoot(GLHandler root) {
         mRoot = root;
         for (int i = 0, n = getChildCount(); i < n; ++i) {
             getChild(i).onAttachToRoot(root); //子GLview的attach办法

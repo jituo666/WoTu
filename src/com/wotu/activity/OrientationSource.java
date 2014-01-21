@@ -1,4 +1,4 @@
-package com.wotu.view;
+package com.wotu.activity;
 
 public interface OrientationSource {
     public int getDisplayRotation();

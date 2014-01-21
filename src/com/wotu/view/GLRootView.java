@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
+import com.wotu.activity.OrientationSource;
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.CanvasAnim;
 import com.wotu.common.WLog;
@@ -18,7 +19,6 @@ import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.BasicTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.GLCanvasImpl;
-import com.wotu.view.opengl.GLRoot;
 import com.wotu.view.opengl.UploadedTexture;
 import com.wotu.view.opengl.WoTuEGLConfigChooser;
 
@@ -31,7 +31,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
-public class GLRootView extends GLSurfaceView implements Renderer, GLRoot {
+public class GLRootView extends GLSurfaceView implements Renderer, GLHandler {
 
     private static final String TAG = "GLRootView";
 
