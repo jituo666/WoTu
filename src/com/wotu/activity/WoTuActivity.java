@@ -5,7 +5,7 @@ import com.wotu.app.PageManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
-import com.wotu.view.GLHandler;
+import com.wotu.view.GLController;
 import com.wotu.view.GLRootView;
 import com.wotu.view.opengl.TransitionStore;
 
@@ -152,7 +152,7 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
     @Override
     public void onBackPressed() {
         // send the back event to the top sub-state
-        GLHandler root = getGLRoot();
+        GLController root = getGLController();
         root.lockRenderThread();
         try {
             getPageManager().onBackPressed();
@@ -163,7 +163,7 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        GLHandler root = getGLRoot();
+        GLController root = getGLController();
         root.lockRenderThread();
         try {
             return getPageManager().itemSelected(item);
@@ -186,7 +186,7 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
     }
 
     @Override
-    public GLHandler getGLRoot() {
+    public GLController getGLController() {
         return mGLRootView;
     }
 

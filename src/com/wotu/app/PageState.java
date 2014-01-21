@@ -50,7 +50,7 @@ abstract public class PageState {
     }
 
     protected void setContentPane(GLView content) {
-        mContext.getGLRoot().setContentPane(content);
+        mContext.getGLController().setContentPane(content);
     }
 
     void initialize(WoTuContext activity, Bundle data) {
@@ -63,7 +63,7 @@ abstract public class PageState {
     }
 
     protected void onBackPressed() {
-        mContext.getPageManager().finishState(this);
+        mContext.getPageManager().finishPage(this);
     }
 
     protected void setStateResult(int resultCode, Intent data) {
@@ -76,13 +76,13 @@ abstract public class PageState {
     protected void onConfigurationChanged(Configuration config) {
     }
 
-    protected void onSaveState(Bundle outState) {
+    protected void onSavePage(Bundle outPage) {
     }
 
-    protected void onStateResult(int requestCode, int resultCode, Intent data) {
+    protected void onPageResult(int requestCode, int resultCode, Intent data) {
     }
 
-    protected void onCreate(Bundle data, Bundle storedState) {
+    protected void onCreate(Bundle data, Bundle storedPage) {
     }
 
     BroadcastReceiver mPowerIntentReceiver = new BroadcastReceiver() {
@@ -125,12 +125,12 @@ abstract public class PageState {
         setScreenOnFlags();
 
         boolean lightsOut = ((mFlags & FLAG_HIDE_STATUS_BAR) != 0);
-        mContext.getGLRoot().setLightsOutMode(lightsOut);
+        mContext.getGLController().setLightsOutMode(lightsOut);
 
         ResultEntry entry = mReceivedResults;
         if (entry != null) {
             mReceivedResults = null;
-            onStateResult(entry.requestCode, entry.resultCode, entry.resultData);
+            onPageResult(entry.requestCode, entry.resultCode, entry.resultData);
         }
 
         if (0 != (mFlags & FLAG_SCREEN_ON_WHEN_PLUGGED)) {
@@ -145,7 +145,7 @@ abstract public class PageState {
         mContext.getTransitionStore().clear();
     }
 
-    // a subclass of ActivityState should override the method to resume itself
+    // a subclass of Page should override the method to resume itself
     protected void onResume() {
     }
 

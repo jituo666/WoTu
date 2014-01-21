@@ -20,7 +20,7 @@ import com.wotu.view.opengl.BasicTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.GLCanvasImpl;
 import com.wotu.view.opengl.UploadedTexture;
-import com.wotu.view.opengl.WoTuEGLConfigChooser;
+import com.wotu.view.opengl.WoTuEGLCfgChooser;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,13 +31,13 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
-public class GLRootView extends GLSurfaceView implements Renderer, GLHandler {
+public class GLRootView extends GLSurfaceView implements Renderer, GLController {
 
     private static final String TAG = "GLRootView";
 
     private static final int FLAG_INITIALIZED = 1;
     private static final int FLAG_NEED_LAYOUT = 2;
-    private final WoTuEGLConfigChooser mEglConfigChooser = new WoTuEGLConfigChooser();
+    private final WoTuEGLCfgChooser mEglConfigChooser = new WoTuEGLCfgChooser();
     private GL11 mGL;
     private final ReentrantLock mRenderLock = new ReentrantLock();
     private final Condition mFreezeCondition = mRenderLock.newCondition();

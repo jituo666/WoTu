@@ -19,22 +19,22 @@ public class PageManager {
     private static final String TAG = "PageManager";
     private boolean mIsResumed = false;
 
-    private static final String KEY_MAIN = "activity-state";
+    private static final String KEY_MAIN = "page-state";
     private static final String KEY_DATA = "data";
     private static final String KEY_STATE = "bundle";
     private static final String KEY_CLASS = "class";
 
     private WoTuContext mContext;
-    private Stack<StateEntry> mStack = new Stack<StateEntry>();
+    private Stack<PageEntry> mStack = new Stack<PageEntry>();
     private PageState.ResultEntry mResult;
 
     public PageManager(WoTuContext context) {
         mContext = context;
     }
 
-    public void startState(Class<? extends PageState> klass,
+    public void startPage(Class<? extends PageState> klass,
             Bundle data) {
-        WLog.v(TAG, "startState " + klass);
+        WLog.v(TAG, "startPage " + klass);
         PageState state = null;
         try {
             state = klass.newInstance();
@@ -42,19 +42,19 @@ public class PageManager {
             throw new AssertionError(e);
         }
         if (!mStack.isEmpty()) {
-            PageState top = getTopState();
+            PageState top = getTopPage();
             if (mIsResumed) top.onPause();
         }
         state.initialize(mContext, data);
 
-        mStack.push(new StateEntry(data, state));
+        mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
         if (mIsResumed) state.resume();
     }
 
-    public void startStateForResult(Class<? extends PageState> klass,
+    public void startPageForResult(Class<? extends PageState> klass,
             int requestCode, Bundle data) {
-        WLog.v(TAG, "startStateForResult " + klass + ", " + requestCode);
+        WLog.v(TAG, "startPageForResult " + klass + ", " + requestCode);
         PageState state = null;
         try {
             state = klass.newInstance();
@@ -66,14 +66,14 @@ public class PageManager {
         state.mResult.requestCode = requestCode;
 
         if (!mStack.isEmpty()) {
-            PageState as = getTopState();
+            PageState as = getTopPage();
             as.mReceivedResults = state.mResult;
             if (mIsResumed) as.onPause();
         } else {
             mResult = state.mResult;
         }
 
-        mStack.push(new StateEntry(data, state));
+        mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
         if (mIsResumed) state.resume();
     }
@@ -82,42 +82,42 @@ public class PageManager {
         if (mStack.isEmpty()) {
             return false;
         } else {
-            return getTopState().onCreateActionBar(menu);
+            return getTopPage().onCreateActionBar(menu);
         }
     }
 
     public void onConfigurationChange(Configuration config) {
-        for (StateEntry entry : mStack) {
-            entry.activityState.onConfigurationChanged(config);
+        for (PageEntry entry : mStack) {
+            entry.pageState.onConfigurationChanged(config);
         }
     }
 
     public void resume() {
         if (mIsResumed) return;
         mIsResumed = true;
-        if (!mStack.isEmpty()) getTopState().resume();
+        if (!mStack.isEmpty()) getTopPage().resume();
     }
 
     public void pause() {
         if (!mIsResumed) return;
         mIsResumed = false;
-        if (!mStack.isEmpty()) getTopState().onPause();
+        if (!mStack.isEmpty()) getTopPage().onPause();
     }
 
     public void notifyActivityResult(int requestCode, int resultCode, Intent data) {
-        getTopState().onStateResult(requestCode, resultCode, data);
+        getTopPage().onPageResult(requestCode, resultCode, data);
     }
 
-    public int getStateCount() {
+    public int getPageCount() {
         return mStack.size();
     }
 
     public boolean itemSelected(MenuItem item) {
         if (!mStack.isEmpty()) {
-            if (getTopState().onItemSelected(item)) return true;
+            if (getTopPage().onItemSelected(item)) return true;
             if (item.getItemId() == android.R.id.home) {
                 if (mStack.size() > 1) {
-                    getTopState().onBackPressed();
+                    getTopPage().onBackPressed();
                 }
                 return true;
             }
@@ -127,11 +127,14 @@ public class PageManager {
 
     public void onBackPressed() {
         if (!mStack.isEmpty()) {
-            getTopState().onBackPressed();
+            getTopPage().onBackPressed();
+        } else {
+            Activity activity = (Activity) mContext.getAndroidContext();
+            activity.finish();
         }
     }
 
-    void finishState(PageState state) {
+    void finishPage(PageState state) {
         // The finish() request could be rejected (only happens under Monkey),
         // If it is rejected, we won't close the last page.
         if (mStack.size() == 1) {
@@ -147,15 +150,15 @@ public class PageManager {
             WLog.v(TAG, "no more state, finish activity");
         }
 
-        WLog.v(TAG, "finishState " + state);
-        if (state != mStack.peek().activityState) {
+        WLog.v(TAG, "finishPage " + state);
+        if (state != mStack.peek().pageState) {
             if (state.isDestroyed()) {
                 WLog.d(TAG, "The state is already destroyed");
                 return;
             } else {
                 throw new IllegalArgumentException("The stateview to be finished"
                         + " is not at the top of the stack: " + state + ", "
-                        + mStack.peek().activityState);
+                        + mStack.peek().pageState);
             }
         }
 
@@ -163,28 +166,28 @@ public class PageManager {
         mStack.pop();
         state.mIsFinishing = true;
         if (mIsResumed) state.onPause();
-        mContext.getGLRoot().setContentPane(null);
+        mContext.getGLController().setContentPane(null);
         state.onDestroy();
 
         if (!mStack.isEmpty()) {
             // Restore the immediately previous state
-            PageState top = mStack.peek().activityState;
+            PageState top = mStack.peek().pageState;
             if (mIsResumed) top.resume();
         }
     }
 
-    void switchState(PageState oldState,
+    void switchPage(PageState oldPage,
             Class<? extends PageState> klass, Bundle data) {
-        WLog.v(TAG, "switchState " + oldState + ", " + klass);
-        if (oldState != mStack.peek().activityState) {
+        WLog.v(TAG, "switchPage " + oldPage + ", " + klass);
+        if (oldPage != mStack.peek().pageState) {
             throw new IllegalArgumentException("The stateview to be finished"
-                    + " is not at the top of the stack: " + oldState + ", "
-                    + mStack.peek().activityState);
+                    + " is not at the top of the stack: " + oldPage + ", "
+                    + mStack.peek().pageState);
         }
         // Remove the top state.
         mStack.pop();
-        if (mIsResumed) oldState.onPause();
-        oldState.onDestroy();
+        if (mIsResumed) oldPage.onPause();
+        oldPage.onDestroy();
 
         // Create new state.
         PageState state = null;
@@ -194,7 +197,7 @@ public class PageManager {
             throw new AssertionError(e);
         }
         state.initialize(mContext, data);
-        mStack.push(new StateEntry(data, state));
+        mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
         if (mIsResumed) state.resume();
     }
@@ -202,15 +205,15 @@ public class PageManager {
     public void destroy() {
         WLog.v(TAG, "destroy");
         while (!mStack.isEmpty()) {
-            mStack.pop().activityState.onDestroy();
+            mStack.pop().pageState.onDestroy();
         }
         mStack.clear();
     }
 
     @SuppressWarnings("unchecked")
-    public void restoreFromState(Bundle inState) {
-        WLog.v(TAG, "restoreFromState");
-        Parcelable list[] = inState.getParcelableArray(KEY_MAIN);
+    public void restoreFromPage(Bundle inPage) {
+        WLog.v(TAG, "restoreFromPage");
+        Parcelable list[] = inPage.getParcelableArray(KEY_MAIN);
         for (Parcelable parcelable : list) {
             Bundle bundle = (Bundle) parcelable;
             Class<? extends PageState> klass =
@@ -219,58 +222,58 @@ public class PageManager {
             Bundle data = bundle.getBundle(KEY_DATA);
             Bundle state = bundle.getBundle(KEY_STATE);
 
-            PageState activityState;
+            PageState pageState;
             try {
-                WLog.v(TAG, "restoreFromState " + klass);
-                activityState = klass.newInstance();
+                WLog.v(TAG, "restoreFromPage " + klass);
+                pageState = klass.newInstance();
             } catch (Exception e) {
                 throw new AssertionError(e);
             }
-            activityState.initialize(mContext, data);
-            activityState.onCreate(data, state);
-            mStack.push(new StateEntry(data, activityState));
+            pageState.initialize(mContext, data);
+            pageState.onCreate(data, state);
+            mStack.push(new PageEntry(data, pageState));
         }
     }
 
-    public void saveState(Bundle outState) {
-        WLog.v(TAG, "saveState");
+    public void savePage(Bundle outPage) {
+        WLog.v(TAG, "savePage");
 
         Parcelable list[] = new Parcelable[mStack.size()];
         int i = 0;
-        for (StateEntry entry : mStack) {
+        for (PageEntry entry : mStack) {
             Bundle bundle = new Bundle();
-            bundle.putSerializable(KEY_CLASS, entry.activityState.getClass());
+            bundle.putSerializable(KEY_CLASS, entry.pageState.getClass());
             bundle.putBundle(KEY_DATA, entry.data);
             Bundle state = new Bundle();
-            entry.activityState.onSaveState(state);
+            entry.pageState.onSavePage(state);
             bundle.putBundle(KEY_STATE, state);
-            WLog.v(TAG, "saveState " + entry.activityState.getClass());
+            WLog.v(TAG, "savePage " + entry.pageState.getClass());
             list[i++] = bundle;
         }
-        outState.putParcelableArray(KEY_MAIN, list);
+        outPage.putParcelableArray(KEY_MAIN, list);
     }
 
-    public boolean hasStateClass(Class<? extends PageState> klass) {
-        for (StateEntry entry : mStack) {
-            if (klass.isInstance(entry.activityState)) {
+    public boolean hasPageClass(Class<? extends PageState> klass) {
+        for (PageEntry entry : mStack) {
+            if (klass.isInstance(entry.pageState)) {
                 return true;
             }
         }
         return false;
     }
 
-    public PageState getTopState() {
+    public PageState getTopPage() {
         UtilsBase.assertTrue(!mStack.isEmpty());
-        return mStack.peek().activityState;
+        return mStack.peek().pageState;
     }
 
-    private static class StateEntry {
+    private static class PageEntry {
         public Bundle data;
-        public PageState activityState;
+        public PageState pageState;
 
-        public StateEntry(Bundle data, PageState state) {
+        public PageEntry(Bundle data, PageState state) {
             this.data = data;
-            this.activityState = state;
+            this.pageState = state;
         }
     }
 }

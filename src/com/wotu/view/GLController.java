@@ -7,7 +7,7 @@ import com.wotu.anim.CanvasAnim;
 import com.wotu.view.opengl.GLCanvas;
 
 
-public interface GLHandler {
+public interface GLController {
 
     // Listener will be called when GL is idle AND before each frame.
     // Mainly used for uploading textures.

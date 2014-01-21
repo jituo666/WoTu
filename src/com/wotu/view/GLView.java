@@ -24,7 +24,7 @@ public class GLView {
     private static final int FLAG_SET_MEASURED_SIZE = 2;
     private static final int FLAG_LAYOUT_REQUESTED = 4;
 
-    private GLHandler mRoot;
+    private GLController mRoot;
     protected GLView mParent;
     private GLView mMotionTarget;
     private ArrayList<GLView> mChilds;
@@ -81,20 +81,20 @@ public class GLView {
         canvas.translate(-xoffset, -yoffset);
     }
 
-    public GLHandler getGLRoot() {
+    public GLController getGLController() {
         return mRoot;
     }
 
     // Request re-rendering of the view hierarchy.
     // This is used for animation or when the contents changed.
     public void invalidate() {
-        GLHandler root = getGLRoot();
+        GLController root = getGLController();
         if (root != null)
             root.requestRender();
     }
 
     public void startAnimation(CanvasAnim animation) {
-        GLHandler root = getGLRoot();
+        GLController root = getGLController();
         if (root == null)
             throw new IllegalStateException();
         mAnimation = animation;
@@ -168,7 +168,7 @@ public class GLView {
             mParent.requestLayout();
         } else {
             // Is this a content pane ?
-            GLHandler root = getGLRoot();
+            GLController root = getGLController();
             if (root != null)
                 root.requestLayoutContentPane();
         }
@@ -297,7 +297,7 @@ public class GLView {
     }
 
     // This should only be called on the content pane (the topmost GLView).
-    public void attachToRoot(GLHandler root) {
+    public void attachToRoot(GLController root) {
         UtilsBase.assertTrue(mParent == null && mRoot == null); //必须是根GLview才可以从外部调用attach
         onAttachToRoot(root);
     }
@@ -308,7 +308,7 @@ public class GLView {
         onDetachFromRoot();
     }
 
-    protected void onAttachToRoot(GLHandler root) {
+    protected void onAttachToRoot(GLController root) {
         mRoot = root;
         for (int i = 0, n = getChildCount(); i < n; ++i) {
             getChild(i).onAttachToRoot(root); //子GLview的attach办法

@@ -13,12 +13,12 @@ import javax.microedition.khronos.opengles.GL11;
 public interface GLCanvas {
     // Tells GLCanvas the size of the underlying GL surface. This should be
     // called before first drawing and when the size of GL surface is changed.
-    // This is called by GLRoot and should not be called by the clients
+    // This is called by getGLController and should not be called by the clients
     // who only want to draw on the GLCanvas. Both width and height must be
     // nonnegative.
     public void setSize(int width, int height);
 
-    // Clear the drawing buffers. This should only be used by GLRoot.
+    // Clear the drawing buffers. This should only be used by getGLController.
     public void clearBuffer();
 
     // Sets and gets the current alpha, alpha must be in [0, 1].

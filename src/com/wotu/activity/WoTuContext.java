@@ -4,14 +4,14 @@ import android.content.Context;
 
 import com.wotu.app.PageManager;
 import com.wotu.data.DataManager;
-import com.wotu.view.GLHandler;
+import com.wotu.view.GLController;
 import com.wotu.view.opengl.TransitionStore;
 
 
 public interface WoTuContext {
     public DataManager getDataManager();
     public PageManager getPageManager();
-    public GLHandler getGLRoot();
+    public GLController getGLController();
     public OrientationManager getOrientationManager();
     public TransitionStore getTransitionStore();
     public Context getAndroidContext();

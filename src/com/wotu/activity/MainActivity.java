@@ -26,10 +26,10 @@ public class MainActivity extends WoTuActivity {
         requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         setContentView(R.layout.activity_main);
         if (savedInstanceState != null) {
-            WLog.i("test-gallery", "savedInstanceState");
-            getPageManager().restoreFromState(savedInstanceState);
+            WLog.i("test-WoTu", "savedInstanceState");
+            getPageManager().restoreFromPage(savedInstanceState);
         } else {
-            WLog.i("test-gallery", "!savedInstanceState");
+            WLog.i("test-WoTu", "!savedInstanceState");
             initializeByIntent();
         }
     }
@@ -61,7 +61,7 @@ public class MainActivity extends WoTuActivity {
     }
 
     public void startDefaultPage() {
-        WLog.i("test-gallery", "startDefaultPage");
+        WLog.i("test-WoTu", "startDefaultPage");
     }
 
     private void startGetContent(Intent intent) {

@@ -5,10 +5,7 @@ import com.wotu.data.DataManager;
 import com.wotu.data.cache.ImageCacher;
 
 import android.app.Application;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.res.Resources;
-import android.os.Looper;
 
 public class WoTuAppImpl extends Application implements WoTuApp {
 
@@ -25,20 +22,6 @@ public class WoTuAppImpl extends Application implements WoTuApp {
         return mDataManager;
     }
 
-    @Override
-    public ContentResolver getContentResolver() {
-        return getContentResolver();
-    }
-
-    @Override
-    public Resources getResources() {
-        return getResources();
-    }
-
-    @Override
-    public Looper getMainLooper() {
-        return getMainLooper();
-    }
 
     @Override
     public synchronized ThreadPool getThreadPool() {
@@ -46,11 +29,6 @@ public class WoTuAppImpl extends Application implements WoTuApp {
             mThreadPool = new ThreadPool();
         }
         return mThreadPool;
-    }
-
-    @Override
-    public Context getAndroidContext() {
-        return getAndroidContext();
     }
 
     @Override
@@ -62,5 +40,11 @@ public class WoTuAppImpl extends Application implements WoTuApp {
             }
             return mImageCacheService;
         }
+    }
+
+
+    @Override
+    public Context getAndroidContext() {
+        return this;
     }
 }
