@@ -4,6 +4,7 @@ package com.wotu.app;
 import com.wotu.activity.WoTuContext;
 import com.wotu.view.GLView;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -121,6 +122,18 @@ abstract public class PageState {
     // should only be called by PageManager
     void resume() {
         Activity activity = (Activity) mContext;
+        ActionBar actionBar = activity.getActionBar();
+        if (actionBar != null) {
+            if ((mFlags & FLAG_HIDE_ACTION_BAR) != 0) {
+                actionBar.hide();
+            } else {
+                actionBar.show();
+            }
+            int stateCount = mContext.getPageManager().getStateCount();
+            mContext.getWoTuActionBar().setDisplayOptions(stateCount > 1, true);
+            // Default behavior, this can be overridden in ActivityState's onResume.
+            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        }
         activity.invalidateOptionsMenu();
         setScreenOnFlags();
 

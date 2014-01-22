@@ -12,6 +12,7 @@ public interface WoTuContext {
     public DataManager getDataManager();
     public PageManager getPageManager();
     public GLController getGLController();
+    public WoTuActionBar getWoTuActionBar();
     public OrientationManager getOrientationManager();
     public TransitionStore getTransitionStore();
     public Context getAndroidContext();

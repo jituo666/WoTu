@@ -27,6 +27,7 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
     private TransitionStore mTransitionStore = new TransitionStore();
     private OrientationManager mOrientationManager;
     private PageManager mPageManager;
+    private WoTuActionBar mActionBar;
 
     private AlertDialog mAlertDialog = null;
     private BroadcastReceiver mMountReceiver = new BroadcastReceiver() {
@@ -188,6 +189,14 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
     @Override
     public GLController getGLController() {
         return mGLRootView;
+    }
+
+    @Override
+    public WoTuActionBar getWoTuActionBar() {
+        if (mActionBar == null) {
+            mActionBar = new WoTuActionBar(this);
+        }
+        return mActionBar;
     }
 
     @Override

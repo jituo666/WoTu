@@ -1,3 +1,4 @@
+
 package com.wotu.app;
 
 import android.app.Activity;
@@ -43,13 +44,15 @@ public class PageManager {
         }
         if (!mStack.isEmpty()) {
             PageState top = getTopPage();
-            if (mIsResumed) top.onPause();
+            if (mIsResumed)
+                top.onPause();
         }
         state.initialize(mContext, data);
 
         mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
-        if (mIsResumed) state.resume();
+        if (mIsResumed)
+            state.resume();
     }
 
     public void startPageForResult(Class<? extends PageState> klass,
@@ -68,14 +71,16 @@ public class PageManager {
         if (!mStack.isEmpty()) {
             PageState as = getTopPage();
             as.mReceivedResults = state.mResult;
-            if (mIsResumed) as.onPause();
+            if (mIsResumed)
+                as.onPause();
         } else {
             mResult = state.mResult;
         }
 
         mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
-        if (mIsResumed) state.resume();
+        if (mIsResumed)
+            state.resume();
     }
 
     public boolean createOptionsMenu(Menu menu) {
@@ -93,15 +98,23 @@ public class PageManager {
     }
 
     public void resume() {
-        if (mIsResumed) return;
+        if (mIsResumed)
+            return;
         mIsResumed = true;
-        if (!mStack.isEmpty()) getTopPage().resume();
+        if (!mStack.isEmpty())
+            getTopPage().resume();
     }
 
     public void pause() {
-        if (!mIsResumed) return;
+        if (!mIsResumed)
+            return;
         mIsResumed = false;
-        if (!mStack.isEmpty()) getTopPage().onPause();
+        if (!mStack.isEmpty())
+            getTopPage().onPause();
+    }
+
+    public int getStateCount() {
+        return mStack.size();
     }
 
     public void notifyActivityResult(int requestCode, int resultCode, Intent data) {
@@ -114,7 +127,8 @@ public class PageManager {
 
     public boolean itemSelected(MenuItem item) {
         if (!mStack.isEmpty()) {
-            if (getTopPage().onItemSelected(item)) return true;
+            if (getTopPage().onItemSelected(item))
+                return true;
             if (item.getItemId() == android.R.id.home) {
                 if (mStack.size() > 1) {
                     getTopPage().onBackPressed();
@@ -165,14 +179,16 @@ public class PageManager {
         // Remove the top state.
         mStack.pop();
         state.mIsFinishing = true;
-        if (mIsResumed) state.onPause();
+        if (mIsResumed)
+            state.onPause();
         mContext.getGLController().setContentPane(null);
         state.onDestroy();
 
         if (!mStack.isEmpty()) {
             // Restore the immediately previous state
             PageState top = mStack.peek().pageState;
-            if (mIsResumed) top.resume();
+            if (mIsResumed)
+                top.resume();
         }
     }
 
@@ -186,7 +202,8 @@ public class PageManager {
         }
         // Remove the top state.
         mStack.pop();
-        if (mIsResumed) oldPage.onPause();
+        if (mIsResumed)
+            oldPage.onPause();
         oldPage.onDestroy();
 
         // Create new state.
@@ -199,7 +216,8 @@ public class PageManager {
         state.initialize(mContext, data);
         mStack.push(new PageEntry(data, state));
         state.onCreate(data, null);
-        if (mIsResumed) state.resume();
+        if (mIsResumed)
+            state.resume();
     }
 
     public void destroy() {
