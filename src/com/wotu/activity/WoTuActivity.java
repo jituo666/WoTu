@@ -153,23 +153,23 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
     @Override
     public void onBackPressed() {
         // send the back event to the top sub-state
-        GLController root = getGLController();
-        root.lockRenderThread();
+        GLController glController = getGLController();
+        glController.lockRenderThread();
         try {
             getPageManager().onBackPressed();
         } finally {
-            root.unlockRenderThread();
+            glController.unlockRenderThread();
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        GLController root = getGLController();
-        root.lockRenderThread();
+        GLController glController = getGLController();
+        glController.lockRenderThread();
         try {
             return getPageManager().itemSelected(item);
         } finally {
-            root.unlockRenderThread();
+            glController.unlockRenderThread();
         }
     }
 

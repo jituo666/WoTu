@@ -88,19 +88,19 @@ public class GLView {
     // Request re-rendering of the view hierarchy.
     // This is used for animation or when the contents changed.
     public void invalidate() {
-        GLController root = getGLController();
-        if (root != null)
-            root.requestRender();
+        GLController glController = getGLController();
+        if (glController != null)
+            glController.requestRender();
     }
 
     public void startAnimation(CanvasAnim animation) {
-        GLController root = getGLController();
-        if (root == null)
+        GLController glController = getGLController();
+        if (glController == null)
             throw new IllegalStateException();
         mAnimation = animation;
         if (mAnimation != null) {
             mAnimation.start();
-            root.registerLaunchedAnimation(mAnimation);
+            glController.registerLaunchedAnimation(mAnimation);
         }
         invalidate();
     }
@@ -168,9 +168,9 @@ public class GLView {
             mParent.requestLayout();
         } else {
             // Is this a content pane ?
-            GLController root = getGLController();
-            if (root != null)
-                root.requestLayoutContentPane();
+            GLController glController = getGLController();
+            if (glController != null)
+                glController.requestLayoutContentPane();
         }
     }
 
@@ -297,9 +297,9 @@ public class GLView {
     }
 
     // This should only be called on the content pane (the topmost GLView).
-    public void attachToRoot(GLController root) {
+    public void attachToRoot(GLController glController) {
         UtilsBase.assertTrue(mParent == null && mRoot == null); //必须是根GLview才可以从外部调用attach
-        onAttachToRoot(root);
+        onAttachToRoot(glController);
     }
 
     // This should only be called on the content pane (the topmost GLView).
@@ -308,10 +308,10 @@ public class GLView {
         onDetachFromRoot();
     }
 
-    protected void onAttachToRoot(GLController root) {
-        mRoot = root;
+    protected void onAttachToRoot(GLController glController) {
+        mRoot = glController;
         for (int i = 0, n = getChildCount(); i < n; ++i) {
-            getChild(i).onAttachToRoot(root); //子GLview的attach办法
+            getChild(i).onAttachToRoot(glController); //子GLview的attach办法
         }
     }
 
@@ -349,7 +349,7 @@ public class GLView {
         mChilds.add(component);
         component.mParent = this;
 
-        // If this is added after we have a root, tell the component.
+        // If this is added after we have a glController, tell the component.
         if (mRoot != null) {
             component.onAttachToRoot(mRoot);
         }
