@@ -21,9 +21,9 @@ import com.wotu.view.SlotView.SlotRenderer;
 public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     //data
-    private Path mMediaSetPath;
-    private MediaSet mMediaSet;
-    private AlbumDataLoader mAlbumDataAdapter;
+    private Path mDataPath;
+    private MediaSet mData;
+    private AlbumDataLoader mDataLoader;
     private static final int BIT_LOADING_RELOAD = 1;
     private static final int BIT_LOADING_SYNC = 2;
     private int mLoadingBits = 0;
@@ -32,7 +32,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     //views
     private SlotView mSlotView;
-    private SlotRenderer mAlbumRender;
+    private SlotRenderer mRender;
 
     private boolean mIsActive = false;
 
@@ -55,7 +55,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private void clearLoadingBit(int loadTaskBit) {
         mLoadingBits &= ~loadTaskBit;
         if (mLoadingBits == 0 && mIsActive) {
-            if (mAlbumDataAdapter.size() == 0) {
+            if (mDataLoader.size() == 0) {
                 Toast.makeText((Context) mContext,
                         R.string.empty_album, Toast.LENGTH_LONG).show();
                 mContext.getPageManager().finishPage(AlbumPage.this);
@@ -73,14 +73,14 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     }
 
     private void initializeData(Bundle data) {
-        mMediaSetPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 0);
-        mMediaSet = mContext.getDataManager().getMediaSet(mMediaSetPath);
-        if (mMediaSet == null) {
-            UtilsBase.fail("MediaSet is null. Path = %s", mMediaSetPath);
+        mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 0);
+        mData = mContext.getDataManager().getMediaSet(mDataPath);
+        if (mData == null) {
+            UtilsBase.fail("MediaSet is null. Path = %s", mDataPath);
         }
-        mAlbumDataAdapter = new AlbumDataLoader(mContext, mMediaSet);
-        mAlbumDataAdapter.setLoadingListener(new AlbumLoadingListener());
-        mAlbumRender.setModel(mAlbumDataAdapter);
+        mDataLoader = new AlbumDataLoader(mContext, mData);
+        mDataLoader.setLoadingListener(new AlbumLoadingListener());
+        mRender.setModel(mDataLoader);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         super.onResume();
         if (!mInitialSynced) {
             setLoadingBit(BIT_LOADING_SYNC);
-            mSyncTask = mMediaSet.requestSync(this);
+            mSyncTask = mData.requestSync(this);
         }
     }
 
