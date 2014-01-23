@@ -1,5 +1,5 @@
 
-package com.wotu.app;
+package com.wotu.page;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -148,7 +148,7 @@ public class PageManager {
         }
     }
 
-    void finishPage(PageState state) {
+    public void finishPage(PageState state) {
         // The finish() request could be rejected (only happens under Monkey),
         // If it is rejected, we won't close the last page.
         if (mStack.size() == 1) {

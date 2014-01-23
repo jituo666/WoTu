@@ -1,10 +1,10 @@
 package com.wotu.activity;
 
 import com.wotu.R;
-import com.wotu.app.PageManager;
 import com.wotu.app.WoTuApp;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
+import com.wotu.page.PageManager;
 import com.wotu.view.GLController;
 import com.wotu.view.GLRootView;
 import com.wotu.view.opengl.TransitionStore;

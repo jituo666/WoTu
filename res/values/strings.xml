@@ -27,8 +27,9 @@
     <string name="set_label_local_albums">本地集锦</string>
     <string name="no_such_item">没有这一项.</string>
     <string name="navi_to_album">相册</string>
-    <string name="navi_to_pictures">没有这一项.</string>
+    <string name="navi_to_albumset">图库</string>
     <string name="navi_tips">跳转提示</string>
+    <string name="empty_album">没有图片或照片.</string>
 
     <!-- Operations -->
     <string name="show_on_map">地图显示</string>

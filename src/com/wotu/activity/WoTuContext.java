@@ -2,8 +2,8 @@ package com.wotu.activity;
 
 import android.content.Context;
 
-import com.wotu.app.PageManager;
 import com.wotu.data.DataManager;
+import com.wotu.page.PageManager;
 import com.wotu.view.GLController;
 import com.wotu.view.opengl.TransitionStore;
 

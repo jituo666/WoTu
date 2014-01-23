@@ -65,7 +65,7 @@ public class WoTuActionBar implements ActionBar.OnNavigationListener {
 
     private static final ActionItem[] sNaviItems = new ActionItem[] {
             new ActionItem(NAVI_ACTION_ALBUM, true, false, R.string.navi_to_album, R.string.navi_to_album),
-            new ActionItem(NAVI_ACTION_PICTURES, true, false, R.string.navi_to_pictures, R.string.navi_to_pictures)
+            new ActionItem(NAVI_ACTION_PICTURES, true, false, R.string.navi_to_albumset, R.string.navi_to_albumset)
     };
 
     private class NaviAdapter extends BaseAdapter {

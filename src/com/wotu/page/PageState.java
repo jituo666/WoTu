@@ -1,5 +1,5 @@
 
-package com.wotu.app;
+package com.wotu.page;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.view.GLView;
