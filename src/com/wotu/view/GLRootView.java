@@ -10,7 +10,9 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.view.View;
 
+import com.wotu.R;
 import com.wotu.activity.OrientationSource;
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.CanvasAnim;
@@ -28,6 +30,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
@@ -56,6 +59,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     private GLCanvas mCanvas;
     private GLView mContentView;
     private boolean mInDownState = false;
+    private boolean mFirstDraw = true;
 
     private final ArrayList<CanvasAnim> mAnimations = new ArrayList<CanvasAnim>();
     private final ArrayDeque<OnGLIdleListener> mIdleListeners = new ArrayDeque<OnGLIdleListener>();
@@ -90,6 +94,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
             mRenderLock.unlock();
         }
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        checkGLError(gl);
     }
 
     @Override
@@ -98,13 +103,17 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY);
         GL11 gl = (GL11) gl1;
         UtilsBase.assertTrue(mGL == gl);
-        gl.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);// 在此可以设置背景色
         mCanvas.setSize(width, height);
+        //
+        checkGLError(gl);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        WLog.i(TAG, "onDrawFrame ");
         AnimTimer.update();
+        gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);// 设置背景色
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         mRenderLock.lock();
         while (mFreeze) {
             mFreezeCondition.awaitUninterruptibly();
@@ -114,6 +123,20 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         } finally {
             mRenderLock.unlock();
         }
+
+        // We put a black cover View in front of the SurfaceView and hide it
+        // after the first draw. This prevents the SurfaceView being transparent
+        // before the first draw.
+        if (mFirstDraw) {
+            mFirstDraw = false;
+            post(new Runnable() {
+                public void run() {
+                    View cover = getRootView().findViewById(R.id.gl_root_cover);
+                    cover.setVisibility(GONE);
+                }
+            });
+        }
+        checkGLError(gl);
     }
 
     private void onDrawFrameLocked(GL10 gl) {
@@ -335,7 +358,8 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
 
     @Override
     public void setContentPane(GLView content) {
-        if (mContentView == content) return;
+        if (mContentView == content)
+            return;
         if (mContentView != null) {
             if (mInDownState) {
                 long now = SystemClock.uptimeMillis();
@@ -359,8 +383,8 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     public void setLightsOutMode(boolean enabled) { //控制系统UI组件(status bar ,action bar等)的显示与否
         int flags = enabled
                 ? SYSTEM_UI_FLAG_LOW_PROFILE
-                | SYSTEM_UI_FLAG_FULLSCREEN
-                | SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | SYSTEM_UI_FLAG_FULLSCREEN
+                        | SYSTEM_UI_FLAG_LAYOUT_STABLE
                 : 0;
         setSystemUiVisibility(flags);
 
@@ -400,6 +424,13 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
             unfreeze();
         } finally {
             super.finalize();
+        }
+    }
+
+    private static void checkGLError(GL gl) {
+        int error = ((GL10) gl).glGetError();
+        if (error != GL10.GL_NO_ERROR) {
+            throw new RuntimeException("GLError 0x" + Integer.toHexString(error));
         }
     }
 
