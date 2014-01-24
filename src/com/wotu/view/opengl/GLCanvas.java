@@ -23,6 +23,7 @@ public interface GLCanvas {
 
     // Sets and gets the current alpha, alpha must be in [0, 1].
     public void setAlpha(float alpha);
+
     public float getAlpha();
 
     // (current alpha) = (current alpha) * alpha
@@ -30,9 +31,13 @@ public interface GLCanvas {
 
     // Change the current transform matrix.
     public void translate(float x, float y, float z);
+
     public void translate(float x, float y);
+
     public void scale(float sx, float sy, float sz);
+
     public void rotate(float angle, float x, float y, float z);
+
     public void multiplyMatrix(float[] mMatrix, int offset);
 
     // Pushes the configuration state (matrix, and alpha) onto
@@ -66,6 +71,7 @@ public interface GLCanvas {
     // Draws a texture to the specified rectangle.
     public void drawTexture(
             BasicTexture texture, int x, int y, int width, int height);
+
     public void drawMesh(BasicTexture tex, int x, int y, int xyBuffer,
             int uvBuffer, int indexBuffer, int indexCount);
 
@@ -74,13 +80,20 @@ public interface GLCanvas {
 
     // Draw a texture with a specified texture transform.
     public void drawTexture(BasicTexture texture, float[] mTextureTransform,
-                int x, int y, int w, int h);
+            int x, int y, int w, int h);
 
     // Draw two textures to the specified rectangle. The actual texture used is
     // from * (1 - ratio) + to * ratio
     // The two textures must have the same size.
     public void drawMixed(BasicTexture from, int toColor,
             float ratio, int x, int y, int w, int h);
+
+    // Draw a region of a texture and a specified color to the specified
+    // rectangle. The actual color used is from * (1 - ratio) + to * ratio.
+    // The region of the texture is defined by parameter "src". The target
+    // rectangle is specified by parameter "target".
+    public abstract void drawMixed(BasicTexture from, int toColor,
+            float ratio, RectF src, RectF target);
 
     // Gets the underlying GL instance. This is used only when direct access to
     // GL is needed.

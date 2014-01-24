@@ -865,4 +865,10 @@ public class GLCanvasImpl implements GLCanvas {
             }
         }
     }
+
+    @Override
+    public void drawMixed(BasicTexture from, int toColor, float ratio, RectF src, RectF target) {
+        // TODO Auto-generated method stub
+        
+    }
 }

@@ -17,6 +17,7 @@ import com.wotu.data.load.DataLoadListener;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.SlotView;
 import com.wotu.view.SlotView.SlotRenderer;
+import com.wotu.view.render.SlotViewRender;
 
 public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
@@ -32,7 +33,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     //views
     private SlotView mSlotView;
-    private SlotRenderer mRender;
+    private SlotViewRender mRender;
 
     private boolean mIsActive = false;
 
@@ -69,7 +70,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     }
 
     private void initializeViews() {
-
+        mSlotView = new SlotView(mContext);
     }
 
     private void initializeData(Bundle data) {

@@ -27,8 +27,8 @@ public abstract class BasicTexture implements Texture {
     protected int mWidth = UNSPECIFIED;
     protected int mHeight = UNSPECIFIED;
 
-    private int mTextureWidth;
-    private int mTextureHeight;
+    protected int mTextureWidth;
+    protected int mTextureHeight;
 
     private boolean mHasBorder;
 

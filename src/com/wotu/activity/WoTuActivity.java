@@ -2,6 +2,7 @@ package com.wotu.activity;
 
 import com.wotu.R;
 import com.wotu.app.WoTuApp;
+import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
 import com.wotu.page.PageManager;
@@ -171,6 +172,10 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
         } finally {
             glController.unlockRenderThread();
         }
+    }
+
+    public synchronized ThreadPool getThreadPool() {
+        return ((WoTuApp) getApplication()).getThreadPool();
     }
 
     @Override

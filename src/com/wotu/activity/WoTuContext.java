@@ -2,6 +2,7 @@ package com.wotu.activity;
 
 import android.content.Context;
 
+import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
 import com.wotu.page.PageManager;
 import com.wotu.view.GLController;
@@ -16,4 +17,5 @@ public interface WoTuContext {
     public OrientationManager getOrientationManager();
     public TransitionStore getTransitionStore();
     public Context getAndroidContext();
+    public ThreadPool getThreadPool();
 }

@@ -1,6 +1,5 @@
 package com.wotu.data.load;
 
-import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
 

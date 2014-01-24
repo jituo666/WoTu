@@ -1,11 +1,37 @@
-
 package com.wotu.view;
 
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+
+import com.wotu.activity.WoTuContext;
+import com.wotu.common.SynchronizedHandler;
+import com.wotu.view.event.AlbumGestureListener;
+import com.wotu.view.event.ScrollerHelper;
+import com.wotu.view.event.UserInteractionListener;
+import com.wotu.view.layout.Layout;
 import com.wotu.view.opengl.GLCanvas;
 
 public class SlotView extends GLView {
 
-    public interface Listener {
+    private WoTuContext mContext;
+
+    public static final int INDEX_NONE = -1;
+    public static final boolean WIDE_SCROLL = true;
+    public static final int OVERSCROLL_3D = 0;
+    public static final int OVERSCROLL_SYSTEM = 1;
+    public static final int OVERSCROLL_NONE = 2;
+
+    private SlotRenderer mRenderer;
+    private final Layout mLayout = new Layout();
+    private final Paper mPaper = new Paper();
+    private final GestureDetector mGestureDetector;
+    private final ScrollerHelper mScroller;
+    private GestureListener mGestureListener;
+    private UserInteractionListener mUIListener;
+    private final SynchronizedHandler mHandler;
+    private boolean mDownInScrolling;
+
+    public interface GestureListener {
         public void onDown(int index);
 
         public void onUp(boolean followedByLongPress);
@@ -17,7 +43,7 @@ public class SlotView extends GLView {
         public void onScrollPositionChanged(int position, int total);
     }
 
-    public static class SimpleListener implements Listener {
+    public static class SimpleListener implements GestureListener {
         @Override
         public void onDown(int index) {
         }
@@ -77,5 +103,64 @@ public class SlotView extends GLView {
         public int countFontSize;
         public int leftMargin;
         public int iconSize;
+    }
+
+    public SlotView(WoTuContext context) {
+        mContext = context;
+        mGestureDetector = new GestureDetector(
+                context.getAndroidContext(), new AlbumGestureListener(mContext, this));
+        mScroller = new ScrollerHelper(mContext.getAndroidContext());
+        mHandler = new SynchronizedHandler(mContext.getGLController());
+    }
+
+    public void setSlotRenderer(SlotRenderer render) {
+        mRenderer = render;
+        if (mRenderer != null) {
+            mRenderer.onSlotSizeChanged(mLayout.getSlotWidth(), mLayout.getSlotHeight());
+            mRenderer.onVisibleRangeChanged(mLayout.getVisibleStart(), mLayout.getVisibleEnd());
+        }
+    }
+
+    public void setGestureListener(GestureListener listener) {
+        mGestureListener = listener;
+    }
+
+    public void setSlotCount(int slotCount) {
+
+    }
+
+    @Override
+    protected void render(GLCanvas canvas) {
+        super.render(canvas);
+    }
+
+    public Layout getLayout() {
+        return mLayout;
+    }
+
+    public Paper getPaper() {
+        return mPaper;
+    }
+
+    public boolean isDownInScrolling() {
+        return mDownInScrolling;
+    }
+
+    @Override
+    protected boolean onTouch(MotionEvent event) {
+        if (mUIListener != null)
+            mUIListener.onUserInteraction();
+        mGestureDetector.onTouchEvent(event);
+        switch (event.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            mDownInScrolling = !mScroller.isFinished();
+            mScroller.forceFinished();
+            break;
+        case MotionEvent.ACTION_UP:
+            mPaper.onRelease();
+            invalidate();
+            break;
+        }
+        return true;
     }
 }
