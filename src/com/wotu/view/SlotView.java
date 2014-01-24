@@ -1,5 +1,6 @@
 package com.wotu.view;
 
+import android.graphics.Rect;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
@@ -134,12 +135,32 @@ public class SlotView extends GLView {
         super.render(canvas);
     }
 
+    public Rect getSlotRect(int slotIndex) {
+        return mLayout.getSlotRect(slotIndex, new Rect());
+    }
+
     public Layout getLayout() {
         return mLayout;
     }
 
     public Paper getPaper() {
         return mPaper;
+    }
+
+    public int getVisibleStart() {
+        return mLayout.getVisibleStart();
+    }
+
+    public int getVisibleEnd() {
+        return mLayout.getVisibleEnd();
+    }
+
+    public int getScrollX() {
+        return mScrollX;
+    }
+
+    public int getScrollY() {
+        return mScrollY;
     }
 
     public boolean isDownInScrolling() {

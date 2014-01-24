@@ -10,6 +10,7 @@ import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
 import com.wotu.data.MediaObject;
 import com.wotu.data.MediaSet;
+import com.wotu.data.Path;
 import com.wotu.utils.UtilsBase;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class AlbumDataLoader {
 
     public static interface DataListener {
         public void onContentChanged(int index);
+
         public void onSizeChanged(int size);
     }
 
@@ -70,15 +72,17 @@ public class AlbumDataLoader {
             @Override
             public void handleMessage(Message message) {
                 switch (message.what) {
-                    case MSG_RUN_OBJECT:
-                        ((Runnable) message.obj).run();
-                        return;
-                    case MSG_LOAD_START:
-                        if (mLoadingListener != null) mLoadingListener.onLoadingStarted();
-                        return;
-                    case MSG_LOAD_FINISH:
-                        if (mLoadingListener != null) mLoadingListener.onLoadingFinished();
-                        return;
+                case MSG_RUN_OBJECT:
+                    ((Runnable) message.obj).run();
+                    return;
+                case MSG_LOAD_START:
+                    if (mLoadingListener != null)
+                        mLoadingListener.onLoadingStarted();
+                    return;
+                case MSG_LOAD_FINISH:
+                    if (mLoadingListener != null)
+                        mLoadingListener.onLoadingFinished();
+                    return;
                 }
             }
         };
@@ -94,6 +98,18 @@ public class AlbumDataLoader {
         mReloadTask.terminate();
         mReloadTask = null;
         mSource.removeContentListener(mSourceListener);
+    }
+
+    // Returns the index of the MediaItem with the given path or
+    // -1 if the path is not cached
+    public int findItem(Path id) {
+        for (int i = mContentStart; i < mContentEnd; i++) {
+            MediaItem item = mData[i % DATA_CACHE_SIZE];
+            if (item != null && id == item.getPath()) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public MediaItem get(int index) {
@@ -123,7 +139,8 @@ public class AlbumDataLoader {
     }
 
     private void setContentWindow(int contentStart, int contentEnd) {
-        if (contentStart == mContentStart && contentEnd == mContentEnd) return;
+        if (contentStart == mContentStart && contentEnd == mContentEnd)
+            return;
         int end = mContentEnd;
         int start = mContentStart;
 
@@ -146,11 +163,13 @@ public class AlbumDataLoader {
                 clearSlot(i % DATA_CACHE_SIZE);
             }
         }
-        if (mReloadTask != null) mReloadTask.notifyDirty();
+        if (mReloadTask != null)
+            mReloadTask.notifyDirty();
     }
 
     public void setActiveWindow(int start, int end) {
-        if (start == mActiveStart && end == mActiveEnd) return;
+        if (start == mActiveStart && end == mActiveEnd)
+            return;
 
         UtilsBase.assertTrue(start <= end
                 && end - start <= mData.length && end <= mSize);
@@ -160,7 +179,8 @@ public class AlbumDataLoader {
         mActiveEnd = end;
 
         // If no data is visible, keep the cache content
-        if (start == end) return;
+        if (start == end)
+            return;
 
         int contentStart = UtilsBase.clamp((start + end) / 2 - length / 2,
                 0, Math.max(0, mSize - length));
@@ -173,7 +193,8 @@ public class AlbumDataLoader {
 
     private class MySourceListener implements ContentListener {
         public void onContentDirty() {
-            if (mReloadTask != null) mReloadTask.notifyDirty();
+            if (mReloadTask != null)
+                mReloadTask.notifyDirty();
         }
     }
 
@@ -246,14 +267,18 @@ public class AlbumDataLoader {
             mSourceVersion = info.version;
             if (mSize != info.size) {
                 mSize = info.size;
-                if (mDataListener != null) mDataListener.onSizeChanged(mSize);
-                if (mContentEnd > mSize) mContentEnd = mSize;
-                if (mActiveEnd > mSize) mActiveEnd = mSize;
+                if (mDataListener != null)
+                    mDataListener.onSizeChanged(mSize);
+                if (mContentEnd > mSize)
+                    mContentEnd = mSize;
+                if (mActiveEnd > mSize)
+                    mActiveEnd = mSize;
             }
 
             ArrayList<MediaItem> items = info.items;
 
-            if (items == null) return null;
+            if (items == null)
+                return null;
             int start = Math.max(info.reloadStart, mContentStart);
             int end = Math.min(info.reloadStart + items.size(), mContentEnd);
 
@@ -275,19 +300,10 @@ public class AlbumDataLoader {
     }
 
     /*
-     * The thread model of ReloadTask
-     *      *
-     * [Reload Task]       [Main Thread]
-     *       |                   |
-     * getUpdateInfo() -->       |           (synchronous call)
-     *     (wait) <----    getUpdateInfo()
-     *       |                   |
-     *   Load Data               |
-     *       |                   |
-     * updateContent() -->       |           (synchronous call)
-     *     (wait)          updateContent()
-     *       |                   |
-     *       |                   |
+     * The thread model of ReloadTask * [Reload Task] [Main Thread] | |
+     * getUpdateInfo() --> | (synchronous call) (wait) <---- getUpdateInfo() | |
+     * Load Data | | | updateContent() --> | (synchronous call) (wait)
+     * updateContent() | | | |
      */
     private class ReloadTask extends Thread {
 
@@ -296,7 +312,8 @@ public class AlbumDataLoader {
         private boolean mIsLoading = false;
 
         private void updateLoading(boolean loading) {
-            if (mIsLoading == loading) return;
+            if (mIsLoading == loading)
+                return;
             mIsLoading = loading;
             mMainHandler.sendEmptyMessage(loading ? MSG_LOAD_START : MSG_LOAD_FINISH);
         }
@@ -322,7 +339,8 @@ public class AlbumDataLoader {
                 }
                 UpdateInfo info = executeAndWait(new GetUpdateInfo(version));
                 updateComplete = info == null;
-                if (updateComplete) continue;
+                if (updateComplete)
+                    continue;
                 synchronized (DataManager.LOCK) {
                     if (info.version != version) {
                         info.size = mSource.getMediaItemCount();

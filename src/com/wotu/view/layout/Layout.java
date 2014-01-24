@@ -1,5 +1,7 @@
 package com.wotu.view.layout;
 
+import android.graphics.Rect;
+
 import com.wotu.view.SlotView;
 
 public class Layout {
@@ -47,5 +49,8 @@ public class Layout {
     public int getScrollLimit() {
         int limit = SlotView.WIDE_SCROLL ? mContentLength - mWidth : mContentLength - mHeight;
         return limit <= 0 ? 0 : limit;
+    }
+    public Rect getSlotRect(int index, Rect rect) {
+        return new Rect();
     }
 }
