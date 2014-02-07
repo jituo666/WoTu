@@ -15,6 +15,11 @@ public class IntArray {
         mData[mSize++] = value;
     }
 
+    public int removeLast() {
+        mSize--;
+        return mData[mSize];
+    }
+
     public int size() {
         return mSize;
     }

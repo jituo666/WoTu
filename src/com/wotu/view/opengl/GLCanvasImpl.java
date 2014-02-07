@@ -1,13 +1,17 @@
 package com.wotu.view.opengl;
 
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.opengl.GLU;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
 import com.wotu.utils.IntArray;
 import com.wotu.utils.UtilsBase;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -68,6 +72,9 @@ public class GLCanvasImpl implements GLCanvas {
     private int mCountTextureOES;
 
     private boolean mBlendEnabled = true;
+    
+    private static float[] sCropRect = new float[4];
+    private static GLId mGLId = new GLES11IdImpl();
 
     private static class ConfigState {
         float mAlpha;
@@ -96,7 +103,7 @@ public class GLCanvasImpl implements GLCanvas {
         xyBuffer.put(BOX_COORDINATES, 0, BOX_COORDINATES.length).position(0);
 
         int[] name = new int[1];
-        GLId.glGenBuffers(1, name, 0);
+        mGLId.glGenBuffers(1, name, 0);
         mBoxCoords = name[0];
 
         gl.glBindBuffer(GL11.GL_ARRAY_BUFFER, mBoxCoords);
@@ -481,13 +488,13 @@ public class GLCanvasImpl implements GLCanvas {
         synchronized (mUnboundTextures) {
             IntArray ids = mUnboundTextures;
             if (ids.size() > 0) {
-                GLId.glDeleteTextures(mGL, ids.size(), ids.getInternalArray(), 0);
+                mGLId.glDeleteTextures(mGL, ids.size(), ids.getInternalArray(), 0);
                 ids.clear();
             }
 
             ids = mDeleteBuffers;
             if (ids.size() > 0) {
-                GLId.glDeleteBuffers(mGL, ids.size(), ids.getInternalArray(), 0);
+                mGLId.glDeleteBuffers(mGL, ids.size(), ids.getInternalArray(), 0);
                 ids.clear();
             }
         }
@@ -525,7 +532,7 @@ public class GLCanvasImpl implements GLCanvas {
         GL11ExtensionPack gl11ep = (GL11ExtensionPack) mGL;
 
         if (mTargetTexture == null && texture != null) {
-            GLId.glGenBuffers(1, mFrameBuffer, 0);
+            mGLId.glGenBuffers(1, mFrameBuffer, 0);
             gl11ep.glBindFramebufferOES(
                     GL11ExtensionPack.GL_FRAMEBUFFER_OES, mFrameBuffer[0]);
         }
@@ -870,5 +877,87 @@ public class GLCanvasImpl implements GLCanvas {
     public void drawMixed(BasicTexture from, int toColor, float ratio, RectF src, RectF target) {
         // TODO Auto-generated method stub
         
+    }
+
+
+    @Override
+    public void setTextureParameters(BasicTexture texture) {
+        int width = texture.getWidth();
+        int height = texture.getHeight();
+        // Define a vertically flipped crop rectangle for OES_draw_texture.
+        // The four values in sCropRect are: left, bottom, width, and
+        // height. Negative value of width or height means flip.
+        sCropRect[0] = 0;
+        sCropRect[1] = height;
+        sCropRect[2] = width;
+        sCropRect[3] = -height;
+
+        // Set texture parameters.
+        int target = texture.getTarget();
+        mGL.glBindTexture(target, texture.getId());
+        mGL.glTexParameterfv(target, GL11Ext.GL_TEXTURE_CROP_RECT_OES, sCropRect, 0);
+        mGL.glTexParameteri(target, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP_TO_EDGE);
+        mGL.glTexParameteri(target, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP_TO_EDGE);
+        mGL.glTexParameterf(target, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+        mGL.glTexParameterf(target, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+    }
+
+    @Override
+    public void initializeTextureSize(BasicTexture texture, int format, int type) {
+        int target = texture.getTarget();
+        mGL.glBindTexture(target, texture.getId());
+        int width = texture.getTextureWidth();
+        int height = texture.getTextureHeight();
+        mGL.glTexImage2D(target, 0, format, width, height, 0, format, type, null);
+    }
+
+    @Override
+    public void initializeTexture(BasicTexture texture, Bitmap bitmap) {
+        int target = texture.getTarget();
+        mGL.glBindTexture(target, texture.getId());
+        GLUtils.texImage2D(target, 0, bitmap, 0);
+    }
+
+    @Override
+    public void texSubImage2D(BasicTexture texture, int xOffset, int yOffset, Bitmap bitmap,
+            int format, int type) {
+        int target = texture.getTarget();
+        mGL.glBindTexture(target, texture.getId());
+        GLUtils.texSubImage2D(target, 0, xOffset, yOffset, bitmap, format, type);
+    }
+
+    @Override
+    public int uploadBuffer(FloatBuffer buf) {
+        return uploadBuffer(buf, Float.SIZE / Byte.SIZE);
+    }
+
+    @Override
+    public int uploadBuffer(ByteBuffer buf) {
+        return uploadBuffer(buf, 1);
+    }
+
+    private int uploadBuffer(Buffer buf, int elementSize) {
+        int[] bufferIds = new int[1];
+        mGLId.glGenBuffers(bufferIds.length, bufferIds, 0);
+        int bufferId = bufferIds[0];
+        mGL.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferId);
+        mGL.glBufferData(GL11.GL_ARRAY_BUFFER, buf.capacity() * elementSize, buf,
+                GL11.GL_STATIC_DRAW);
+        return bufferId;
+    }
+
+    @Override
+    public void recoverFromLightCycle() {
+        // This is only required for GLES20
+    }
+
+    @Override
+    public void getBounds(Rect bounds, int x, int y, int width, int height) {
+        // This is only required for GLES20
+    }
+
+    @Override
+    public GLId getGLId() {
+        return mGLId;
     }
 }

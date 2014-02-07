@@ -56,16 +56,14 @@ public class TiledTexture implements Texture {
 
     private int mUploadIndex = 0;
 
-    private final Tile[] mTiles;  // Can be modified in different threads.
-                                  // Should be protected by "synchronized."
+    private final Tile[] mTiles; // Can be modified in different threads. Should be protected by "synchronized."
     private final int mWidth;
     private final int mHeight;
     private final RectF mSrcRect = new RectF();
     private final RectF mDestRect = new RectF();
 
     public static class Uploader implements OnGLIdleListener {
-        private final ArrayDeque<TiledTexture> mTextures =
-                new ArrayDeque<TiledTexture>(INIT_CAPACITY);
+        private final ArrayDeque<TiledTexture> mTextures = new ArrayDeque<TiledTexture>(INIT_CAPACITY);
 
         private final GLController mGLController;
         private boolean mIsQueued = false;
@@ -79,10 +77,12 @@ public class TiledTexture implements Texture {
         }
 
         public synchronized void addTexture(TiledTexture t) {
-            if (t.isReady()) return;
+            if (t.isReady())
+                return;
             mTextures.addLast(t);
 
-            if (mIsQueued) return;
+            if (mIsQueued)
+                return;
             mIsQueued = true;
             mGLController.addOnGLIdleListener(this);
         }
@@ -143,10 +143,14 @@ public class TiledTexture implements Texture {
                 localBitmapRef = null;
 
                 // draw borders if need
-                if (x > 0) sCanvas.drawLine(x - 1, 0, x - 1, TILE_SIZE, sPaint);
-                if (y > 0) sCanvas.drawLine(0, y - 1, TILE_SIZE, y - 1, sPaint);
-                if (r < CONTENT_SIZE) sCanvas.drawLine(r, 0, r, TILE_SIZE, sPaint);
-                if (b < CONTENT_SIZE) sCanvas.drawLine(0, b, TILE_SIZE, b, sPaint);
+                if (x > 0)
+                    sCanvas.drawLine(x - 1, 0, x - 1, TILE_SIZE, sPaint);
+                if (y > 0)
+                    sCanvas.drawLine(0, y - 1, TILE_SIZE, y - 1, sPaint);
+                if (r < CONTENT_SIZE)
+                    sCanvas.drawLine(r, 0, r, TILE_SIZE, sPaint);
+                if (b < CONTENT_SIZE)
+                    sCanvas.drawLine(0, b, TILE_SIZE, b, sPaint);
             }
 
             return sUploadBitmap;
@@ -170,7 +174,8 @@ public class TiledTexture implements Texture {
     private static Tile obtainTile() {
         synchronized (sFreeTileLock) {
             Tile result = sFreeTileHead;
-            if (result == null) return new Tile();
+            if (result == null)
+                return new Tile();
             sFreeTileHead = result.nextFreeTile;
             result.nextFreeTile = null;
             return result;
@@ -178,7 +183,8 @@ public class TiledTexture implements Texture {
     }
 
     private boolean uploadNextTile(GLCanvas canvas) {
-        if (mUploadIndex == mTiles.length) return true;
+        if (mUploadIndex == mTiles.length)
+            return true;
 
         synchronized (mTiles) {
             Tile next = mTiles[mUploadIndex++];
@@ -193,7 +199,8 @@ public class TiledTexture implements Texture {
                 // time. When scrolling, we need to draw several tiles on the screen
                 // at the same time. It may cause a UI jank even these textures has
                 // been uploaded.
-                if (!hasBeenLoad) next.draw(canvas, 0, 0);
+                if (!hasBeenLoad)
+                    next.draw(canvas, 0, 0);
             }
         }
         return mUploadIndex == mTiles.length;
@@ -326,7 +333,8 @@ public class TiledTexture implements Texture {
                 Tile t = mTiles[i];
                 src.set(0, 0, t.contentWidth, t.contentHeight);
                 src.offset(t.offsetX, t.offsetY);
-                if (!src.intersect(source)) continue;
+                if (!src.intersect(source))
+                    continue;
                 mapRect(dest, src, x0, y0, x, y, scaleX, scaleY);
                 src.offset(BORDER_SIZE - t.offsetX, BORDER_SIZE - t.offsetY);
                 canvas.drawTexture(t, src, dest);

@@ -1,8 +1,6 @@
 package com.wotu.view.opengl;
 
-import com.wotu.utils.UtilsBase;
-
-
+import junit.framework.Assert;
 
 public class GLPaint {
     private float mLineWidth = 1f;
@@ -17,7 +15,7 @@ public class GLPaint {
     }
 
     public void setLineWidth(float width) {
-        UtilsBase.assertTrue(width >= 0);
+        Assert.assertTrue(width >= 0);
         mLineWidth = width;
     }
 

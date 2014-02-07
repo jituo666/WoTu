@@ -21,6 +21,8 @@ public class SlotView extends GLView {
     public static final int OVERSCROLL_3D = 0;
     public static final int OVERSCROLL_SYSTEM = 1;
     public static final int OVERSCROLL_NONE = 2;
+    public static final int RENDER_MORE_PASS = 1;
+    public static final int RENDER_MORE_FRAME = 2;
 
     private SlotRenderer mRenderer;
     private final Layout mLayout = new Layout();

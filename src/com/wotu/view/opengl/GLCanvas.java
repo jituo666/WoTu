@@ -1,5 +1,7 @@
 package com.wotu.view.opengl;
 
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.RectF;
 
 import javax.microedition.khronos.opengles.GL11;
@@ -11,6 +13,7 @@ import javax.microedition.khronos.opengles.GL11;
 // [x, x+width) * [y, y+height)
 //
 public interface GLCanvas {
+    public GLId getGLId();
     // Tells GLCanvas the size of the underlying GL surface. This should be
     // called before first drawing and when the size of GL surface is changed.
     // This is called by getGLController and should not be called by the clients
@@ -118,4 +121,83 @@ public interface GLCanvas {
     public void beginRenderTarget(RawTexture texture);
 
     public void endRenderTarget();
+    
+    //
+
+    /**
+     * Sets texture parameters to use GL_CLAMP_TO_EDGE for both
+     * GL_TEXTURE_WRAP_S and GL_TEXTURE_WRAP_T. Sets texture parameters to be
+     * GL_LINEAR for GL_TEXTURE_MIN_FILTER and GL_TEXTURE_MAG_FILTER.
+     * bindTexture() must be called prior to this.
+     *
+     * @param texture The texture to set parameters on.
+     */
+    public abstract void setTextureParameters(BasicTexture texture);
+
+    /**
+     * Initializes the texture to a size by calling texImage2D on it.
+     *
+     * @param texture The texture to initialize the size.
+     * @param format The texture format (e.g. GL_RGBA)
+     * @param type The texture type (e.g. GL_UNSIGNED_BYTE)
+     */
+    public abstract void initializeTextureSize(BasicTexture texture, int format, int type);
+
+    /**
+     * Initializes the texture to a size by calling texImage2D on it.
+     *
+     * @param texture The texture to initialize the size.
+     * @param bitmap The bitmap to initialize the bitmap with.
+     */
+    public abstract void initializeTexture(BasicTexture texture, Bitmap bitmap);
+
+    /**
+     * Calls glTexSubImage2D to upload a bitmap to the texture.
+     *
+     * @param texture The target texture to write to.
+     * @param xOffset Specifies a texel offset in the x direction within the
+     *            texture array.
+     * @param yOffset Specifies a texel offset in the y direction within the
+     *            texture array.
+     * @param format The texture format (e.g. GL_RGBA)
+     * @param type The texture type (e.g. GL_UNSIGNED_BYTE)
+     */
+    public abstract void texSubImage2D(BasicTexture texture, int xOffset, int yOffset,
+            Bitmap bitmap,
+            int format, int type);
+
+    /**
+     * Generates buffers and uploads the buffer data.
+     *
+     * @param buffer The buffer to upload
+     * @return The buffer ID that was generated.
+     */
+    public abstract int uploadBuffer(java.nio.FloatBuffer buffer);
+
+    /**
+     * Generates buffers and uploads the element array buffer data.
+     *
+     * @param buffer The buffer to upload
+     * @return The buffer ID that was generated.
+     */
+    public abstract int uploadBuffer(java.nio.ByteBuffer buffer);
+
+    /**
+     * After LightCycle makes GL calls, this method is called to restore the GL
+     * configuration to the one expected by GLCanvas.
+     */
+    public abstract void recoverFromLightCycle();
+
+    /**
+     * Gets the bounds given by x, y, width, and height as well as the internal
+     * matrix state. There is no special handling for non-90-degree rotations.
+     * It only considers the lower-left and upper-right corners as the bounds.
+     *
+     * @param bounds The output bounds to write to.
+     * @param x The left side of the input rectangle.
+     * @param y The bottom of the input rectangle.
+     * @param width The width of the input rectangle.
+     * @param height The height of the input rectangle.
+     */
+    public abstract void getBounds(Rect bounds, int x, int y, int width, int height);
 }

@@ -1,10 +1,10 @@
 package com.wotu.view.opengl;
 
-
-import com.wotu.common.WLog;
-import com.wotu.utils.UtilsBase;
+import android.util.Log;
 
 import java.util.WeakHashMap;
+
+import com.wotu.utils.UtilsBase;
 
 // BasicTexture is a Texture corresponds to a real GL texture.
 // The state of a BasicTexture indicates whether its data is loaded to GL memory.
@@ -19,9 +19,10 @@ public abstract class BasicTexture implements Texture {
     protected static final int STATE_LOADED = 1;
     protected static final int STATE_ERROR = -1;
 
-    private static final int MAX_TEXTURE_SIZE = 2048;
+    // Log a warning if a texture is larger along a dimension
+    private static final int MAX_TEXTURE_SIZE = 4096;
 
-    protected int mId;
+    protected int mId = -1;
     protected int mState;
 
     protected int mWidth = UNSPECIFIED;
@@ -58,15 +59,19 @@ public abstract class BasicTexture implements Texture {
      * Sets the content size of this texture. In OpenGL, the actual texture
      * size must be of power of 2, the size of the content may be smaller.
      */
-    protected void setSize(int width, int height) {
+    public void setSize(int width, int height) {
         mWidth = width;
         mHeight = height;
-        mTextureWidth = UtilsBase.nextPowerOf2(width);
-        mTextureHeight = UtilsBase.nextPowerOf2(height);
+        mTextureWidth = width > 0 ? UtilsBase.nextPowerOf2(width) : 0;
+        mTextureHeight = height > 0 ? UtilsBase.nextPowerOf2(height) : 0;
         if (mTextureWidth > MAX_TEXTURE_SIZE || mTextureHeight > MAX_TEXTURE_SIZE) {
-            WLog.w(TAG, String.format("texture is too large: %d x %d",
+            Log.w(TAG, String.format("texture is too large: %d x %d",
                     mTextureWidth, mTextureHeight), new Exception());
         }
+    }
+
+    public boolean isFlippedVertically() {
+      return false;
     }
 
     public int getId() {
@@ -77,6 +82,7 @@ public abstract class BasicTexture implements Texture {
     public int getWidth() {
         return mWidth;
     }
+
     @Override
     public int getHeight() {
         return mHeight;
@@ -149,8 +155,9 @@ public abstract class BasicTexture implements Texture {
 
     private void freeResource() {
         GLCanvas canvas = mCanvasRef;
-        if (canvas != null && isLoaded()) {
+        if (canvas != null && mId != -1) {
             canvas.unloadTexture(this);
+            mId = -1; // Don't free it again.
         }
         mState = STATE_UNLOADED;
         setAssociatedCanvas(null);

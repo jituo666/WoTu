@@ -3,11 +3,14 @@ package com.wotu.page;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Message;
 import android.view.Menu;
 import android.widget.Toast;
 
 import com.wotu.R;
+import com.wotu.app.MediaSelector;
 import com.wotu.common.Future;
+import com.wotu.common.SynchronizedHandler;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
@@ -24,6 +27,7 @@ import com.wotu.view.GLView;
 import com.wotu.view.PhotoFallbackEffect;
 import com.wotu.view.RelativePosition;
 import com.wotu.view.SlotView;
+import com.wotu.view.opengl.FadeTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.render.SlotViewRender;
 
@@ -37,7 +41,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private MediaSet mData;
     private DetailsHelper mDetailsHelper;
     private MyDetailsSource mDetailsSource;
-    private AlbumDataLoader mDataLoader;
+    private AlbumDataLoader mAlbumDataLoader;
     private static final int BIT_LOADING_RELOAD = 1;
     private static final int BIT_LOADING_SYNC = 2;
     private int mLoadingBits = 0;
@@ -51,6 +55,11 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private RelativePosition mOpenCenter = new RelativePosition();
     private boolean mIsActive = false;
     private float mUserDistance; // in pixel
+
+    private boolean mGetContent;
+    private SynchronizedHandler mHandler;
+    private static final int MSG_PICK_PHOTO = 0;
+    protected MediaSelector mSelector;
 
     private PhotoFallbackEffect mResumeEffect;
     private PhotoFallbackEffect.PositionProvider mPositionProvider =
@@ -69,7 +78,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
                     int start = mSlotView.getVisibleStart();
                     int end = mSlotView.getVisibleEnd();
                     for (int i = start; i < end; ++i) {
-                        MediaItem item = mDataLoader.get(i);
+                        MediaItem item = mAlbumDataLoader.get(i);
                         if (item != null && item.getPath() == path)
                             return i;
                     }
@@ -139,20 +148,20 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
         @Override
         public int size() {
-            return mDataLoader.size();
+            return mAlbumDataLoader.size();
         }
 
         @Override
         public int setIndex() {
-            //Path id = mSelectionManager.getSelected(false).get(0);
-            mIndex = mDataLoader.findItem(null);
+            //Path id = mSelector.getSelected(false).get(0);
+            mIndex = mAlbumDataLoader.findItem(null);
             return mIndex;
         }
 
         @Override
         public MediaDetails getDetails() {
             // this relies on setIndex() being called beforehand
-            MediaObject item = mDataLoader.get(mIndex);
+            MediaObject item = mAlbumDataLoader.get(mIndex);
             if (item != null) {
                 mRender.setHighlightItemPath(item.getPath());
                 return item.getDetails();
@@ -190,7 +199,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private void clearLoadingBit(int loadTaskBit) {
         mLoadingBits &= ~loadTaskBit;
         if (mLoadingBits == 0 && mIsActive) {
-            if (mDataLoader.size() == 0) {
+            if (mAlbumDataLoader.size() == 0) {
                 Toast.makeText((Context) mContext,
                         R.string.empty_album, Toast.LENGTH_LONG).show();
                 mContext.getPageManager().finishPage(AlbumPage.this);
@@ -205,9 +214,9 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     private void initializeViews() {
         mSlotView = new SlotView(mContext);
-        mRender = new SlotViewRender(mContext, mSlotView);
+        mRender = new SlotViewRender(mContext, mSlotView, mSelector);
         mSlotView.setSlotRenderer(mRender);
-        mRender.setModel(mDataLoader);
+        mRender.setModel(mAlbumDataLoader);
         mRootPane.addChild(mSlotView);
         mSlotView.setGestureListener(new SlotView.SimpleListener() {
             @Override
@@ -249,11 +258,11 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         if (!mIsActive)
             return;
 
-        if (mSelectionManager.inSelectionMode()) {
-            MediaItem item = mAlbumDataAdapter.get(slotIndex);
+        if (mSelector.inSelectionMode()) {
+            MediaItem item = mAlbumDataLoader.get(slotIndex);
             if (item == null)
                 return; // Item not ready yet, ignore the click
-            mSelectionManager.toggle(item.getPath());
+            mSelector.toggle(item.getPath());
             mSlotView.invalidate();
         } else {
             // Render transition in pressed state
@@ -267,11 +276,11 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     public void onLongTap(int slotIndex) {
         if (mGetContent)
             return;
-        MediaItem item = mAlbumDataAdapter.get(slotIndex);
+        MediaItem item = mAlbumDataLoader.get(slotIndex);
         if (item == null)
             return;
-        mSelectionManager.setAutoLeaveSelectionMode(true);
-        mSelectionManager.toggle(item.getPath());
+        mSelector.setAutoLeaveSelectionMode(true);
+        mSelector.toggle(item.getPath());
         mSlotView.invalidate();
     }
 
@@ -281,16 +290,30 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         if (mData == null) {
             UtilsBase.fail("MediaSet is null. Path = %s", mDataPath);
         }
-        mDataLoader = new AlbumDataLoader(mContext, mData);
-        mDataLoader.setLoadingListener(new AlbumLoadingListener());
-        mRender.setModel(mDataLoader);
+        mAlbumDataLoader = new AlbumDataLoader(mContext, mData);
+        mAlbumDataLoader.setLoadingListener(new AlbumLoadingListener());
+        mRender.setModel(mAlbumDataLoader);
     }
 
     @Override
     protected void onCreate(Bundle data, Bundle storedPage) {
+        super.onCreate(data, storedPage);
+        mSelector = new MediaSelector(mContext, false);
         initializeViews();
         initializeData(data);
-        super.onCreate(data, storedPage);
+        mHandler = new SynchronizedHandler(mContext.getGLController()) {
+            @Override
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                case MSG_PICK_PHOTO: {
+                    //pickPhoto(message.arg1);
+                    break;
+                }
+                default:
+                    throw new AssertionError(message.what);
+                }
+            }
+        };
     }
 
     @Override
@@ -330,5 +353,70 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     public void onSyncDone(MediaSet mediaSet, int resultCode) {
 
     }
-
+//
+//    private void pickPhoto(int slotIndex) {
+//        pickPhoto(slotIndex, false);
+//    }
+//
+//    private void pickPhoto(int slotIndex, boolean startInFilmstrip) {
+//        if (!mIsActive)
+//            return;
+//
+//        if (!startInFilmstrip) {
+//            // Launch photos in lights out mode
+//            mContext.getGLController().setLightsOutMode(true);
+//        }
+//
+//        MediaItem item = mAlbumDataLoader.get(slotIndex);
+//        if (item == null)
+//            return; // Item not ready yet, ignore the click
+//        if (mGetContent) {
+//            onGetContent(item);
+//        } else if (mLaunchedFromPhotoPage) {
+//            TransitionStore transitions = mContext.getTransitionStore();
+//            transitions.put(
+//                    PhotoPage.KEY_ALBUMPAGE_TRANSITION,
+//                    PhotoPage.MSG_ALBUMPAGE_PICKED);
+//            transitions.put(PhotoPage.KEY_INDEX_HINT, slotIndex);
+//            onBackPressed();
+//        } else {
+//            // Get into the PhotoPage.
+//            // mAlbumView.savePositions(PositionRepository.getInstance(mContext));
+//            Bundle data = new Bundle();
+//            data.putInt(PhotoPage.KEY_INDEX_HINT, slotIndex);
+//            data.putParcelable(PhotoPage.KEY_OPEN_ANIMATION_RECT,
+//                    mSlotView.getSlotRect(slotIndex, mRootPane));
+//            data.putString(PhotoPage.KEY_MEDIA_SET_PATH, mMediaSetPath.toString());
+//            data.putString(PhotoPage.KEY_MEDIA_ITEM_PATH, item.getPath().toString());
+//            data.putInt(PhotoPage.KEY_ALBUMPAGE_TRANSITION, PhotoPage.MSG_ALBUMPAGE_STARTED);
+//            data.putBoolean(PhotoPage.KEY_START_IN_FILMSTRIP, startInFilmstrip);
+//            data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, mMediaSet.isCameraRoll());
+//            if (startInFilmstrip) {
+//                mContext.getStateManager().switchState(this, FilmstripPage.class, data);
+//            } else {
+//                mContext.getStateManager().startStateForResult(SinglePhotoPage.class, REQUEST_PHOTO, data);
+//            }
+//        }
+//    }
+//
+//    private void onGetContent(final MediaItem item) {
+//        DataManager dm = mContext.getDataManager();
+//        Activity activity = mContext;
+//        if (mData.getString(WoTuActivity.EXTRA_CROP) != null) {
+//            Uri uri = dm.getContentUri(item.getPath());
+//            Intent intent = new Intent(CropActivity.CROP_ACTION, uri)
+//                    .addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+//                    .putExtras(getData());
+//            if (mData.getParcelable(MediaStore.EXTRA_OUTPUT) == null) {
+//                intent.putExtra(CropExtras.KEY_RETURN_DATA, true);
+//            }
+//            activity.startActivity(intent);
+//            activity.finish();
+//        } else {
+//            Intent intent = new Intent(null, item.getContentUri())
+//                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//            activity.setResult(Activity.RESULT_OK, intent);
+//            activity.finish();
+//        }
+//    }
 }

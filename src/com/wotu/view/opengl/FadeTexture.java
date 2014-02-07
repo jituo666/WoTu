@@ -11,24 +11,18 @@ public abstract class FadeTexture implements Texture {
     // The duration of the fading animation in milliseconds
     public static final int DURATION = 180;
 
-    protected final BasicTexture mTexture;
     private final long mStartTime;
     private final int mWidth;
     private final int mHeight;
     private final boolean mIsOpaque;
     private boolean mIsAnimating;
 
-    public FadeTexture(BasicTexture texture) {
-        mTexture = texture;
-        mWidth = mTexture.getWidth();
-        mHeight = mTexture.getHeight();
-        mIsOpaque = mTexture.isOpaque();
+    public FadeTexture(int width, int height, boolean opaque) {
+        mWidth = width;
+        mHeight = height;
+        mIsOpaque = opaque;
         mStartTime = now();
         mIsAnimating = true;
-    }
-
-    private long now() {
-        return AnimTimer.get();
     }
 
     @Override
@@ -61,8 +55,11 @@ public abstract class FadeTexture implements Texture {
     }
 
     protected float getRatio() {
-        float r = (float) (now() - mStartTime) / DURATION;
+        float r = (float)(now() - mStartTime) / DURATION;
         return UtilsBase.clamp(1.0f - r, 0.0f, 1.0f);
     }
 
+    private long now() {
+        return AnimTimer.get();
+    }
 }
