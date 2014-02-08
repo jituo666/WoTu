@@ -16,6 +16,8 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.microedition.khronos.opengles.GL11;
+
 import com.wotu.utils.IntArray;
 
 public class GLES20Canvas implements GLCanvas {
@@ -992,4 +994,5 @@ public class GLES20Canvas implements GLCanvas {
     public GLId getGLId() {
         return mGLId;
     }
+
 }

@@ -16,7 +16,7 @@ import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.Texture;
 import com.wotu.view.opengl.TiledTexture;
 
-public class SlotViewRender implements SlotRenderer {
+public class SlotViewRender extends SlotViewRenderBase {
 
     private WoTuContext mContext;
     private AlbumDataWindow mDataWindow;
@@ -52,6 +52,7 @@ public class SlotViewRender implements SlotRenderer {
     }
 
     public SlotViewRender(WoTuContext context, SlotView slotView, MediaSelector selector) {
+        super(context.getAndroidContext());
         mContext = context;
         mMediaSelector = selector;
         mWaitLoadingTexture = new ColorTexture(mPlaceholderColor);

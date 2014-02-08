@@ -22,7 +22,7 @@ import javax.microedition.khronos.opengles.GL11;
 import javax.microedition.khronos.opengles.GL11Ext;
 import javax.microedition.khronos.opengles.GL11ExtensionPack;
 
-public class GLCanvasImpl implements GLCanvas {
+public class GLES11Canvas implements GLCanvas {
 
     private static final String TAG = "GLCanvasImpl";
 
@@ -81,7 +81,7 @@ public class GLCanvasImpl implements GLCanvas {
         float mMatrix[] = new float[16];
         ConfigState mNextFree;
 
-        public void restore(GLCanvasImpl canvas) {
+        public void restore(GLES11Canvas canvas) {
             if (mAlpha >= 0)
                 canvas.setAlpha(mAlpha);
             if (mMatrix[0] != Float.NEGATIVE_INFINITY) {
@@ -123,7 +123,7 @@ public class GLCanvasImpl implements GLCanvas {
         // mMatrixValues and mAlpha will be initialized in setSize()
     }
 
-    public GLCanvasImpl(GL11 gl) {
+    public GLES11Canvas(GL11 gl) {
         mGL = gl;
         mGLState = new GLState(gl);
         initialize();
@@ -459,11 +459,6 @@ public class GLCanvasImpl implements GLCanvas {
 
         drawBoundTexture(from, x, y, width, height);
         mGLState.setTexEnvMode(GL11.GL_REPLACE);
-    }
-
-    @Override
-    public GL11 getGLInstance() {
-        return mGL;
     }
 
     @Override
@@ -959,5 +954,11 @@ public class GLCanvasImpl implements GLCanvas {
     @Override
     public GLId getGLId() {
         return mGLId;
+    }
+
+    @Override
+    public void clearBuffer(float[] argb) {
+        // TODO Auto-generated method stub
+        
     }
 }

@@ -6,6 +6,7 @@ import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.NinePatchTexture;
 import com.wotu.view.opengl.ResourceTexture;
 import com.wotu.view.opengl.Texture;
+import com.wotu.view.SlotView;
 
 import android.content.Context;
 import android.graphics.Rect;

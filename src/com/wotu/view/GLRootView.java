@@ -20,7 +20,7 @@ import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.BasicTexture;
 import com.wotu.view.opengl.GLCanvas;
-import com.wotu.view.opengl.GLCanvasImpl;
+import com.wotu.view.opengl.GLES11Canvas;
 import com.wotu.view.opengl.UploadedTexture;
 import com.wotu.view.opengl.WoTuEGLCfgChooser;
 
@@ -88,7 +88,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         mRenderLock.lock();
         try {
             mGL = gl;
-            mCanvas = new GLCanvasImpl(mGL);
+            mCanvas = new GLES11Canvas(mGL);
             BasicTexture.invalidateAllTextures();
         } finally {
             mRenderLock.unlock();

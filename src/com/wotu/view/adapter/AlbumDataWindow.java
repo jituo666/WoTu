@@ -1,6 +1,5 @@
 package com.wotu.view.adapter;
 
-import src.com.android.gallery3d.ui.AlbumSlidingWindow.AlbumEntry;
 import android.graphics.Bitmap;
 import android.os.Message;
 
@@ -18,7 +17,7 @@ import com.wotu.view.opengl.Texture;
 import com.wotu.view.opengl.TiledTexture;
 
 /**
- * control the data window ,[activate Range], [content range]
+ * control the data window ,[activate range], [content range]
  * 
  * @author jetoo
  * 

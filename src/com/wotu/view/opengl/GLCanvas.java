@@ -21,8 +21,11 @@ public interface GLCanvas {
     // nonnegative.
     public void setSize(int width, int height);
 
-    // Clear the drawing buffers. This should only be used by getGLController.
-    public void clearBuffer();
+    // Clear the drawing buffers. This should only be used by GLRoot.
+    public abstract void clearBuffer();
+
+    public abstract void clearBuffer(float[] argb);
+
 
     // Sets and gets the current alpha, alpha must be in [0, 1].
     public void setAlpha(float alpha);
@@ -97,10 +100,6 @@ public interface GLCanvas {
     // rectangle is specified by parameter "target".
     public abstract void drawMixed(BasicTexture from, int toColor,
             float ratio, RectF src, RectF target);
-
-    // Gets the underlying GL instance. This is used only when direct access to
-    // GL is needed.
-    public GL11 getGLInstance();
 
     // Unloads the specified texture from the canvas. The resource allocated
     // to draw the texture will be released. The specified texture will return

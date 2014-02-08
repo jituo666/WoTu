@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.wotu.activity.WoTuActivity;
 import com.wotu.activity.WoTuContext;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
@@ -13,7 +12,7 @@ import com.wotu.data.Path;
 
 public class MediaSelector {
     @SuppressWarnings("unused")
-    private static final String TAG = "SelectionManager";
+    private static final String TAG = "MediaSelector";
 
     public static final int ENTER_SELECTION_MODE = 1;
     public static final int LEAVE_SELECTION_MODE = 2;
