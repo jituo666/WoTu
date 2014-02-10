@@ -1,3 +1,4 @@
+
 package com.wotu.view;
 
 import android.graphics.Rect;
@@ -28,9 +29,9 @@ public class SlotView extends GLView {
 
     private int mOverscrollEffect = OVERSCROLL_3D;
 
+    private Layout mLayout;
     private SlotRenderer mRenderer;
-    private final Layout mLayout = new NormalLayout();
-    private final Paper mPaper = new Paper();
+    private Paper mPaper = new Paper();
     private final GestureDetector mGestureDetector;
     private final ScrollerHelper mScroller;
     private GestureListener mGestureListener;
@@ -119,10 +120,13 @@ public class SlotView extends GLView {
 
     public SlotView(WoTuContext context) {
         mContext = context;
-        mGestureDetector = new GestureDetector(
-                context.getAndroidContext(), new AlbumGestureListener(mContext, this));
+        mGestureDetector = new GestureDetector(context.getAndroidContext(), new AlbumGestureListener(mContext, this));
         mScroller = new ScrollerHelper(mContext.getAndroidContext());
         mHandler = new SynchronizedHandler(mContext.getGLController());
+    }
+
+    public void setSlotLayout(Layout layout) {
+        mLayout = layout;
     }
 
     public void setSlotRenderer(SlotRenderer render) {
@@ -191,6 +195,10 @@ public class SlotView extends GLView {
         updateScrollPosition(position, false);
     }
 
+    public void setSlotCount(int slotCount) {
+        mLayout.setSlotCount(slotCount);
+    }
+
     private void updateScrollPosition(int position, boolean force) {
         if (!force && (mLayout.isWideScroll() ? position == mScrollX : position == mScrollY))
             return;
@@ -206,10 +214,6 @@ public class SlotView extends GLView {
     protected void onScrollPositionChanged(int newPosition) {
         int limit = mLayout.getScrollLimit();
         mListener.onScrollPositionChanged(newPosition, limit);
-    }
-
-    public void setSlotCount(int slotCount) {
-
     }
 
     @Override
@@ -255,14 +259,14 @@ public class SlotView extends GLView {
             mUIListener.onUserInteraction();
         mGestureDetector.onTouchEvent(event);
         switch (event.getAction()) {
-        case MotionEvent.ACTION_DOWN:
-            mDownInScrolling = !mScroller.isFinished();
-            mScroller.forceFinished();
-            break;
-        case MotionEvent.ACTION_UP:
-            mPaper.onRelease();
-            invalidate();
-            break;
+            case MotionEvent.ACTION_DOWN:
+                mDownInScrolling = !mScroller.isFinished();
+                mScroller.forceFinished();
+                break;
+            case MotionEvent.ACTION_UP:
+                mPaper.onRelease();
+                invalidate();
+                break;
         }
         return true;
     }

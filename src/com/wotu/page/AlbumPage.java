@@ -1,3 +1,4 @@
+
 package com.wotu.page;
 
 import android.content.Context;
@@ -27,6 +28,7 @@ import com.wotu.view.GLView;
 import com.wotu.view.PhotoFallbackEffect;
 import com.wotu.view.RelativePosition;
 import com.wotu.view.SlotView;
+import com.wotu.view.layout.NormalLayout;
 import com.wotu.view.opengl.FadeTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.render.SlotViewRender;
@@ -121,8 +123,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
             // Set the mSlotView as a reference point to the open animation
             mOpenCenter.setReferencePosition(0, slotViewTop);
             mSlotView.layout(0, slotViewTop, slotViewRight, slotViewBottom);
-            UtilsCom.setViewPointMatrix(mMatrix,
-                    (right - left) / 2, (bottom - top) / 2, -mUserDistance);
+            UtilsCom.setViewPointMatrix(mMatrix, (right - left) / 2, (bottom - top) / 2, -mUserDistance);
         }
 
         @Override
@@ -210,40 +211,6 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         }
     }
 
-    @Override
-    protected boolean onCreateActionBar(Menu menu) {
-        return super.onCreateActionBar(menu);
-    }
-
-    private void initializeViews() {
-        mSlotView = new SlotView(mContext);
-        mRender = new SlotViewRender(mContext, mSlotView, mSelector);
-        mSlotView.setSlotRenderer(mRender);
-        mRender.setModel(mAlbumDataLoader);
-        mRootPane.addChild(mSlotView);
-        mSlotView.setGestureListener(new SlotView.SimpleListener() {
-            @Override
-            public void onDown(int index) {
-                AlbumPage.this.onDown(index);
-            }
-
-            @Override
-            public void onUp(boolean followedByLongPress) {
-                AlbumPage.this.onUp(followedByLongPress);
-            }
-
-            @Override
-            public void onSingleTapUp(int slotIndex) {
-                AlbumPage.this.onSingleTapUp(slotIndex);
-            }
-
-            @Override
-            public void onLongTap(int slotIndex) {
-                AlbumPage.this.onLongTap(slotIndex);
-            }
-        });
-    }
-
     private void onDown(int index) {
         mRender.setPressedIndex(index);
     }
@@ -287,6 +254,36 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         mSlotView.invalidate();
     }
 
+    private void initializeViews() {
+        mSlotView = new SlotView(mContext);
+        mSlotView.setSlotLayout(new NormalLayout());
+        mRender = new SlotViewRender(mContext, mSlotView, mSelector);
+        mSlotView.setSlotRenderer(mRender);
+        mRender.setModel(mAlbumDataLoader);
+        mRootPane.addChild(mSlotView);
+        mSlotView.setGestureListener(new SlotView.SimpleListener() {
+            @Override
+            public void onDown(int index) {
+                AlbumPage.this.onDown(index);
+            }
+
+            @Override
+            public void onUp(boolean followedByLongPress) {
+                AlbumPage.this.onUp(followedByLongPress);
+            }
+
+            @Override
+            public void onSingleTapUp(int slotIndex) {
+                AlbumPage.this.onSingleTapUp(slotIndex);
+            }
+
+            @Override
+            public void onLongTap(int slotIndex) {
+                AlbumPage.this.onLongTap(slotIndex);
+            }
+        });
+    }
+
     private void initializeData(Bundle data) {
         mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 0);
         mData = mContext.getDataManager().getMediaSet(mDataPath);
@@ -299,6 +296,11 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     }
 
     @Override
+    protected boolean onCreateActionBar(Menu menu) {
+        return super.onCreateActionBar(menu);
+    }
+
+    @Override
     protected void onCreate(Bundle data, Bundle storedPage) {
         super.onCreate(data, storedPage);
         mSelector = new MediaSelector(mContext, false);
@@ -308,12 +310,12 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
             @Override
             public void handleMessage(Message message) {
                 switch (message.what) {
-                case MSG_PICK_PHOTO: {
-                    //pickPhoto(message.arg1);
-                    break;
-                }
-                default:
-                    throw new AssertionError(message.what);
+                    case MSG_PICK_PHOTO: {
+                        //pickPhoto(message.arg1);
+                        break;
+                    }
+                    default:
+                        throw new AssertionError(message.what);
                 }
             }
         };
@@ -362,70 +364,70 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     public void onSyncDone(MediaSet mediaSet, int resultCode) {
 
     }
-//
-//    private void pickPhoto(int slotIndex) {
-//        pickPhoto(slotIndex, false);
-//    }
-//
-//    private void pickPhoto(int slotIndex, boolean startInFilmstrip) {
-//        if (!mIsActive)
-//            return;
-//
-//        if (!startInFilmstrip) {
-//            // Launch photos in lights out mode
-//            mContext.getGLController().setLightsOutMode(true);
-//        }
-//
-//        MediaItem item = mAlbumDataLoader.get(slotIndex);
-//        if (item == null)
-//            return; // Item not ready yet, ignore the click
-//        if (mGetContent) {
-//            onGetContent(item);
-//        } else if (mLaunchedFromPhotoPage) {
-//            TransitionStore transitions = mContext.getTransitionStore();
-//            transitions.put(
-//                    PhotoPage.KEY_ALBUMPAGE_TRANSITION,
-//                    PhotoPage.MSG_ALBUMPAGE_PICKED);
-//            transitions.put(PhotoPage.KEY_INDEX_HINT, slotIndex);
-//            onBackPressed();
-//        } else {
-//            // Get into the PhotoPage.
-//            // mAlbumView.savePositions(PositionRepository.getInstance(mContext));
-//            Bundle data = new Bundle();
-//            data.putInt(PhotoPage.KEY_INDEX_HINT, slotIndex);
-//            data.putParcelable(PhotoPage.KEY_OPEN_ANIMATION_RECT,
-//                    mSlotView.getSlotRect(slotIndex, mRootPane));
-//            data.putString(PhotoPage.KEY_MEDIA_SET_PATH, mMediaSetPath.toString());
-//            data.putString(PhotoPage.KEY_MEDIA_ITEM_PATH, item.getPath().toString());
-//            data.putInt(PhotoPage.KEY_ALBUMPAGE_TRANSITION, PhotoPage.MSG_ALBUMPAGE_STARTED);
-//            data.putBoolean(PhotoPage.KEY_START_IN_FILMSTRIP, startInFilmstrip);
-//            data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, mMediaSet.isCameraRoll());
-//            if (startInFilmstrip) {
-//                mContext.getStateManager().switchState(this, FilmstripPage.class, data);
-//            } else {
-//                mContext.getStateManager().startStateForResult(SinglePhotoPage.class, REQUEST_PHOTO, data);
-//            }
-//        }
-//    }
-//
-//    private void onGetContent(final MediaItem item) {
-//        DataManager dm = mContext.getDataManager();
-//        Activity activity = mContext;
-//        if (mData.getString(WoTuActivity.EXTRA_CROP) != null) {
-//            Uri uri = dm.getContentUri(item.getPath());
-//            Intent intent = new Intent(CropActivity.CROP_ACTION, uri)
-//                    .addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
-//                    .putExtras(getData());
-//            if (mData.getParcelable(MediaStore.EXTRA_OUTPUT) == null) {
-//                intent.putExtra(CropExtras.KEY_RETURN_DATA, true);
-//            }
-//            activity.startActivity(intent);
-//            activity.finish();
-//        } else {
-//            Intent intent = new Intent(null, item.getContentUri())
-//                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-//            activity.setResult(Activity.RESULT_OK, intent);
-//            activity.finish();
-//        }
-//    }
+    //
+    //    private void pickPhoto(int slotIndex) {
+    //        pickPhoto(slotIndex, false);
+    //    }
+    //
+    //    private void pickPhoto(int slotIndex, boolean startInFilmstrip) {
+    //        if (!mIsActive)
+    //            return;
+    //
+    //        if (!startInFilmstrip) {
+    //            // Launch photos in lights out mode
+    //            mContext.getGLController().setLightsOutMode(true);
+    //        }
+    //
+    //        MediaItem item = mAlbumDataLoader.get(slotIndex);
+    //        if (item == null)
+    //            return; // Item not ready yet, ignore the click
+    //        if (mGetContent) {
+    //            onGetContent(item);
+    //        } else if (mLaunchedFromPhotoPage) {
+    //            TransitionStore transitions = mContext.getTransitionStore();
+    //            transitions.put(
+    //                    PhotoPage.KEY_ALBUMPAGE_TRANSITION,
+    //                    PhotoPage.MSG_ALBUMPAGE_PICKED);
+    //            transitions.put(PhotoPage.KEY_INDEX_HINT, slotIndex);
+    //            onBackPressed();
+    //        } else {
+    //            // Get into the PhotoPage.
+    //            // mAlbumView.savePositions(PositionRepository.getInstance(mContext));
+    //            Bundle data = new Bundle();
+    //            data.putInt(PhotoPage.KEY_INDEX_HINT, slotIndex);
+    //            data.putParcelable(PhotoPage.KEY_OPEN_ANIMATION_RECT,
+    //                    mSlotView.getSlotRect(slotIndex, mRootPane));
+    //            data.putString(PhotoPage.KEY_MEDIA_SET_PATH, mMediaSetPath.toString());
+    //            data.putString(PhotoPage.KEY_MEDIA_ITEM_PATH, item.getPath().toString());
+    //            data.putInt(PhotoPage.KEY_ALBUMPAGE_TRANSITION, PhotoPage.MSG_ALBUMPAGE_STARTED);
+    //            data.putBoolean(PhotoPage.KEY_START_IN_FILMSTRIP, startInFilmstrip);
+    //            data.putBoolean(PhotoPage.KEY_IN_CAMERA_ROLL, mMediaSet.isCameraRoll());
+    //            if (startInFilmstrip) {
+    //                mContext.getStateManager().switchState(this, FilmstripPage.class, data);
+    //            } else {
+    //                mContext.getStateManager().startStateForResult(SinglePhotoPage.class, REQUEST_PHOTO, data);
+    //            }
+    //        }
+    //    }
+    //
+    //    private void onGetContent(final MediaItem item) {
+    //        DataManager dm = mContext.getDataManager();
+    //        Activity activity = mContext;
+    //        if (mData.getString(WoTuActivity.EXTRA_CROP) != null) {
+    //            Uri uri = dm.getContentUri(item.getPath());
+    //            Intent intent = new Intent(CropActivity.CROP_ACTION, uri)
+    //                    .addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+    //                    .putExtras(getData());
+    //            if (mData.getParcelable(MediaStore.EXTRA_OUTPUT) == null) {
+    //                intent.putExtra(CropExtras.KEY_RETURN_DATA, true);
+    //            }
+    //            activity.startActivity(intent);
+    //            activity.finish();
+    //        } else {
+    //            Intent intent = new Intent(null, item.getContentUri())
+    //                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    //            activity.setResult(Activity.RESULT_OK, intent);
+    //            activity.finish();
+    //        }
+    //    }
 }
