@@ -3,27 +3,33 @@ package com.wotu.view.layout;
 import android.graphics.Rect;
 
 import com.wotu.view.SlotView;
+import com.wotu.view.SlotView.SlotRenderer;
+import com.wotu.view.SlotView.Spec;
 
-public class Layout {
+public abstract class Layout {
 
-    private boolean mWideScroll = false;
-    private int mVisibleStart;
-    private int mVisibleEnd;
+    public static final int INDEX_NONE = -1;
 
-    private int mSlotCount;
-    private int mSlotWidth;
-    private int mSlotHeight;
-    private int mSlotGap;
+    protected boolean mWideScroll = false;
+    protected int mVisibleStart;
+    protected int mVisibleEnd;
 
-    private int mWidth;
-    private int mHeight;
+    protected int mSlotCount;
+    protected int mSlotWidth;
+    protected int mSlotHeight;
+    protected int mSlotGap;
 
-    private int mUnitCount;
-    private int mContentLength;
-    private int mScrollPosition;
+    protected int mWidth;
+    protected int mHeight;
 
-    public Layout() {
+    protected int mUnitCount;
+    protected int mContentLength;
+    protected int mScrollPosition;
 
+    protected SlotRenderer mRenderer;
+
+    public void setSlotRenderer(SlotRenderer render) {
+        mRenderer = render;
     }
 
     public int getVisibleStart() {
@@ -31,26 +37,38 @@ public class Layout {
     }
 
     public int getSlotWidth() {
-        return mWidth;
+        return mSlotWidth;
     }
 
     public int getSlotHeight() {
-        return mHeight;
+        return mSlotHeight;
     }
 
     public int getVisibleEnd() {
         return mVisibleEnd;
     }
 
-    public int getSlotIndexByPosition(float x, float y) {
-        return 0;
+    public int getSlotCount() {
+        return mSlotCount;
     }
 
     public int getScrollLimit() {
         int limit = SlotView.WIDE_SCROLL ? mContentLength - mWidth : mContentLength - mHeight;
         return limit <= 0 ? 0 : limit;
     }
-    public Rect getSlotRect(int index, Rect rect) {
-        return new Rect();
+
+    public boolean isWideScroll() {
+        return mWideScroll;
     }
+
+    public abstract boolean setSlotCount(int slotCount);
+
+    public abstract void setSize(int w, int h);
+
+    public abstract int getSlotIndexByPosition(float x, float y);
+
+    public abstract Rect getSlotRect(int index, Rect rect);
+
+    public abstract void setScrollPosition(int position);
+
 }

@@ -42,6 +42,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private DetailsHelper mDetailsHelper;
     private MyDetailsSource mDetailsSource;
     private AlbumDataLoader mAlbumDataLoader;
+    private boolean mLoadingFailed;
     private static final int BIT_LOADING_RELOAD = 1;
     private static final int BIT_LOADING_SYNC = 2;
     private int mLoadingBits = 0;
@@ -89,11 +90,13 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     private class AlbumLoadingListener implements DataLoadListener {
         @Override
         public void onLoadingStarted() {
+            mLoadingFailed = false;
             setLoadingBit(BIT_LOADING_RELOAD);
         }
 
         @Override
-        public void onLoadingFinished() {
+        public void onLoadingFinished(boolean loadFailed) {
+            mLoadingFailed = loadFailed;
             clearLoadingBit(BIT_LOADING_RELOAD);
         }
     }
@@ -327,7 +330,13 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
             mResumeEffect.setPositionProvider(mPositionProvider);
             mResumeEffect.start();
         }
-
+        setContentPane(mRootPane);
+        // Set the reload bit here to prevent it exit this page in clearLoadingBit().
+        setLoadingBit(BIT_LOADING_RELOAD);
+        mLoadingFailed = false;
+        mAlbumDataLoader.resume();
+        mRender.resume();
+        mRender.setPressedIndex(-1);
         if (!mInitialSynced) {
             setLoadingBit(BIT_LOADING_SYNC);
             mSyncTask = mData.requestSync(this);

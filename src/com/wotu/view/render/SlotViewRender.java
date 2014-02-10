@@ -4,11 +4,9 @@ import android.graphics.Color;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.app.MediaSelector;
-import com.wotu.data.MediaObject;
 import com.wotu.data.Path;
 import com.wotu.data.load.AlbumDataLoader;
 import com.wotu.view.SlotView;
-import com.wotu.view.SlotView.SlotRenderer;
 import com.wotu.view.adapter.AlbumDataWindow;
 import com.wotu.view.opengl.ColorTexture;
 import com.wotu.view.opengl.FadeInTexture;

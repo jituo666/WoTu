@@ -6,10 +6,12 @@ import android.view.MotionEvent;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.common.SynchronizedHandler;
+import com.wotu.utils.UtilsBase;
 import com.wotu.view.event.AlbumGestureListener;
 import com.wotu.view.event.ScrollerHelper;
 import com.wotu.view.event.UserInteractionListener;
 import com.wotu.view.layout.Layout;
+import com.wotu.view.layout.NormalLayout;
 import com.wotu.view.opengl.GLCanvas;
 
 public class SlotView extends GLView {
@@ -24,8 +26,10 @@ public class SlotView extends GLView {
     public static final int RENDER_MORE_PASS = 1;
     public static final int RENDER_MORE_FRAME = 2;
 
+    private int mOverscrollEffect = OVERSCROLL_3D;
+
     private SlotRenderer mRenderer;
-    private final Layout mLayout = new Layout();
+    private final Layout mLayout = new NormalLayout();
     private final Paper mPaper = new Paper();
     private final GestureDetector mGestureDetector;
     private final ScrollerHelper mScroller;
@@ -33,6 +37,10 @@ public class SlotView extends GLView {
     private UserInteractionListener mUIListener;
     private final SynchronizedHandler mHandler;
     private boolean mDownInScrolling;
+
+    private GestureListener mListener;
+    // to prevent allocating memory
+    private final Rect mTempRect = new Rect();
 
     public interface GestureListener {
         public void onDown(int index);
@@ -96,6 +104,7 @@ public class SlotView extends GLView {
         public int rowsLand = -1;
         public int rowsPort = -1;
         public int slotGap = -1;
+        public int slotHeightAdditional = 0;
     }
 
     public static class LabelSpec {
@@ -118,6 +127,7 @@ public class SlotView extends GLView {
 
     public void setSlotRenderer(SlotRenderer render) {
         mRenderer = render;
+        mLayout.setSlotRenderer(render);
         if (mRenderer != null) {
             mRenderer.onSlotSizeChanged(mLayout.getSlotWidth(), mLayout.getSlotHeight());
             mRenderer.onVisibleRangeChanged(mLayout.getVisibleStart(), mLayout.getVisibleEnd());
@@ -126,6 +136,76 @@ public class SlotView extends GLView {
 
     public void setGestureListener(GestureListener listener) {
         mGestureListener = listener;
+    }
+
+    @Override
+    protected void onLayout(boolean changeSize, int l, int t, int r, int b) {
+        if (!changeSize)
+            return;
+        // Make sure we are still at a resonable scroll position after the size
+        // is changed (like orientation change). We choose to keep the center
+        // visible slot still visible. This is arbitrary but reasonable.
+        int visibleIndex = (mLayout.getVisibleStart() + mLayout.getVisibleEnd()) / 2;
+        mLayout.setSize(r - l, b - t);
+        makeSlotVisible(visibleIndex);
+        if (mOverscrollEffect == OVERSCROLL_3D) {
+            mPaper.setSize(r - l, b - t);
+        }
+    }
+
+    public void setCenterIndex(int index) {
+        int slotCount = mLayout.getSlotCount();
+        if (index < 0 || index >= slotCount) {
+            return;
+        }
+        Rect rect = mLayout.getSlotRect(index, mTempRect);
+        int position = mLayout.isWideScroll()
+                ? (rect.left + rect.right - getWidth()) / 2
+                : (rect.top + rect.bottom - getHeight()) / 2;
+        setScrollPosition(position);
+    }
+
+    public void makeSlotVisible(int index) {
+        Rect rect = mLayout.getSlotRect(index, mTempRect);
+        int visibleBegin = mLayout.isWideScroll() ? mScrollX : mScrollY;
+        int visibleLength = mLayout.isWideScroll() ? getWidth() : getHeight();
+        int visibleEnd = visibleBegin + visibleLength;
+        int slotBegin = mLayout.isWideScroll() ? rect.left : rect.top;
+        int slotEnd = mLayout.isWideScroll() ? rect.right : rect.bottom;
+
+        int position = visibleBegin;
+        if (visibleLength < slotEnd - slotBegin) {
+            position = visibleBegin;
+        } else if (slotBegin < visibleBegin) {
+            position = slotBegin;
+        } else if (slotEnd > visibleEnd) {
+            position = slotEnd - visibleLength;
+        }
+
+        setScrollPosition(position);
+    }
+
+    public void setScrollPosition(int position) {
+        position = UtilsBase.clamp(position, 0, mLayout.getScrollLimit());
+        mScroller.setPosition(position);
+        updateScrollPosition(position, false);
+    }
+
+    private void updateScrollPosition(int position, boolean force) {
+        if (!force && (mLayout.isWideScroll() ? position == mScrollX : position == mScrollY))
+            return;
+        if (mLayout.isWideScroll()) {
+            mScrollX = position;
+        } else {
+            mScrollY = position;
+        }
+        mLayout.setScrollPosition(position);
+        onScrollPositionChanged(position);
+    }
+
+    protected void onScrollPositionChanged(int newPosition) {
+        int limit = mLayout.getScrollLimit();
+        mListener.onScrollPositionChanged(newPosition, limit);
     }
 
     public void setSlotCount(int slotCount) {

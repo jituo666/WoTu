@@ -58,6 +58,8 @@ public class AlbumDataLoader {
     private DataLoadListener mLoadingListener;
 
     private ReloadTask mReloadTask;
+    // the data version on which last loading failed
+    private long mFailedVersion = MediaObject.INVALID_DATA_VERSION;
 
     public AlbumDataLoader(WoTuContext context, MediaSet mediaSet) {
         mSource = mediaSet;
@@ -80,8 +82,10 @@ public class AlbumDataLoader {
                         mLoadingListener.onLoadingStarted();
                     return;
                 case MSG_LOAD_FINISH:
-                    if (mLoadingListener != null)
-                        mLoadingListener.onLoadingFinished();
+                    if (mLoadingListener != null) {
+                        boolean loadFailed = (mFailedVersion == MediaObject.INVALID_DATA_VERSION);
+                        mLoadingListener.onLoadingFinished(loadFailed);
+                    }
                     return;
                 }
             }
