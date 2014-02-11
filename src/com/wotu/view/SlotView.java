@@ -266,82 +266,82 @@ public class SlotView extends GLView {
 
     @Override
     protected void render(GLCanvas canvas) {
-//        super.render(canvas);
-//
-//        if (mRenderer == null)
-//            return;
-//        mRenderer.prepareDrawing();
-//
-//        long animTime = AnimTimer.get();
-//        boolean more = mScroller.advanceAnimation(animTime);
-//        int oldX = mScrollX;
-//        updateScrollPosition(mScroller.getPosition(), false);
-//
-//        boolean paperActive = false;
-//        if (mOverscrollEffect == OVERSCROLL_3D) {
-//            // Check if an edge is reached and notify mPaper if so.
-//            int newX = mScrollX;
-//            int limit = mLayout.getScrollLimit();
-//            if (oldX > 0 && newX == 0 || oldX < limit && newX == limit) {
-//                float v = mScroller.getCurrVelocity();
-//                if (newX == limit)
-//                    v = -v;
-//
-//                // I don't know why, but getCurrVelocity() can return NaN.
-//                if (!Float.isNaN(v)) {
-//                    mPaper.edgeReached(v);
-//                }
-//            }
-//            paperActive = mPaper.advanceAnimation();
-//        }
-//
-//        more |= paperActive;
-//
-//        if (mAnimation != null) {
-//            more |= mAnimation.calculate(animTime);
-//        }
-//
-//        canvas.translate(-mScrollX, -mScrollY);
-//
-//        int requestCount = 0;
-//        int requestedSlot[] = expandIntArray(mRequestRenderSlots, mLayout.getVisibleEnd() - mLayout.getVisibleStart());
-//
-//        for (int i = mLayout.getVisibleEnd() - 1; i >= mLayout.getVisibleStart(); --i) {
-//            int r = renderItem(canvas, i, 0, paperActive);
-//            if ((r & RENDER_MORE_FRAME) != 0)
-//                more = true;
-//            if ((r & RENDER_MORE_PASS) != 0)
-//                requestedSlot[requestCount++] = i;
-//        }
-//
-//        for (int pass = 1; requestCount != 0; ++pass) {
-//            int newCount = 0;
-//            for (int i = 0; i < requestCount; ++i) {
-//                int r = renderItem(canvas,
-//                        requestedSlot[i], pass, paperActive);
-//                if ((r & RENDER_MORE_FRAME) != 0)
-//                    more = true;
-//                if ((r & RENDER_MORE_PASS) != 0)
-//                    requestedSlot[newCount++] = i;
-//            }
-//            requestCount = newCount;
-//        }
-//
-//        canvas.translate(mScrollX, mScrollY);
-//
-//        if (more)
-//            invalidate();
-//
-//        final UserInteractionListener listener = mUIListener;
-//        if (mMoreAnimation && !more && listener != null) {
-//            mHandler.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    listener.onUserInteractionEnd();
-//                }
-//            });
-//        }
-//        mMoreAnimation = more;
+        super.render(canvas);
+
+        if (mRenderer == null)
+            return;
+        mRenderer.prepareDrawing();
+
+        long animTime = AnimTimer.get();
+        boolean more = mScroller.advanceAnimation(animTime);
+        int oldX = mScrollX;
+        updateScrollPosition(mScroller.getPosition(), false);
+
+        boolean paperActive = false;
+        if (mOverscrollEffect == OVERSCROLL_3D) {
+            // Check if an edge is reached and notify mPaper if so.
+            int newX = mScrollX;
+            int limit = mLayout.getScrollLimit();
+            if (oldX > 0 && newX == 0 || oldX < limit && newX == limit) {
+                float v = mScroller.getCurrVelocity();
+                if (newX == limit)
+                    v = -v;
+
+                // I don't know why, but getCurrVelocity() can return NaN.
+                if (!Float.isNaN(v)) {
+                    mPaper.edgeReached(v);
+                }
+            }
+            paperActive = mPaper.advanceAnimation();
+        }
+
+        more |= paperActive;
+
+        if (mAnimation != null) {
+            more |= mAnimation.calculate(animTime);
+        }
+
+        canvas.translate(-mScrollX, -mScrollY);
+
+        int requestCount = 0;
+        int requestedSlot[] = expandIntArray(mRequestRenderSlots, mLayout.getVisibleEnd() - mLayout.getVisibleStart());
+
+        for (int i = mLayout.getVisibleEnd() - 1; i >= mLayout.getVisibleStart(); --i) {
+            int r = renderItem(canvas, i, 0, paperActive);
+            if ((r & RENDER_MORE_FRAME) != 0)
+                more = true;
+            if ((r & RENDER_MORE_PASS) != 0)
+                requestedSlot[requestCount++] = i;
+        }
+
+        for (int pass = 1; requestCount != 0; ++pass) {
+            int newCount = 0;
+            for (int i = 0; i < requestCount; ++i) {
+                int r = renderItem(canvas,
+                        requestedSlot[i], pass, paperActive);
+                if ((r & RENDER_MORE_FRAME) != 0)
+                    more = true;
+                if ((r & RENDER_MORE_PASS) != 0)
+                    requestedSlot[newCount++] = i;
+            }
+            requestCount = newCount;
+        }
+
+        canvas.translate(mScrollX, mScrollY);
+
+        if (more)
+            invalidate();
+
+        final UserInteractionListener listener = mUIListener;
+        if (mMoreAnimation && !more && listener != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onUserInteractionEnd();
+                }
+            });
+        }
+        mMoreAnimation = more;
     }
 
     private static int[] expandIntArray(int array[], int capacity) {

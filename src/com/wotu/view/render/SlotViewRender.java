@@ -9,6 +9,7 @@ import com.wotu.data.load.AlbumDataLoader;
 import com.wotu.view.SlotView;
 import com.wotu.view.adapter.AlbumDataWindow;
 import com.wotu.view.opengl.ColorTexture;
+import com.wotu.view.opengl.FadeInTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.Texture;
 import com.wotu.view.opengl.TiledTexture;
@@ -110,29 +111,29 @@ public class SlotViewRender extends SlotViewRenderBase {
         if (mSlotFilter != null && !mSlotFilter.acceptSlot(index))
             return 0;
 
-//        AlbumDataWindow.AlbumEntry entry = mDataWindow.get(index);
+        AlbumDataWindow.AlbumEntry entry = mDataWindow.get(index);
 
         int renderRequestFlags = 0;
 
-//        Texture content = null;//checkTexture(entry.content);
-        //if (content == null) {
-//            content = mWaitLoadingTexture;
-//            entry.isWaitDisplayed = true;
-//            WLog.d(TAG, "renderSlot index:" + index + " mWaitLoadingTexture");
-//        } else if (entry.isWaitDisplayed) {
-//            entry.isWaitDisplayed = false;
-//            content = new FadeInTexture(mPlaceholderColor, entry.bitmapTexture);
-//            entry.content = content;
-//            WLog.d(TAG, "renderSlot index:" + index + " bitmapTexture:" + (entry.bitmapTexture == null));
-//        }
+        Texture content = checkTexture(entry.content);
+        if (content == null) {
+            content = mWaitLoadingTexture;
+            entry.isWaitDisplayed = true;
+            WLog.d(TAG, "renderSlot index:" + index + " mWaitLoadingTexture");
+        } else if (entry.isWaitDisplayed) {
+            entry.isWaitDisplayed = false;
+            content = new FadeInTexture(mPlaceholderColor, entry.bitmapTexture);
+            entry.content = content;
+            WLog.d(TAG, "renderSlot index:" + index + " bitmapTexture:" + (entry.bitmapTexture == null));
+        }
 
-//        drawContent(canvas, content, width, height, entry.rotation);
-//        if ((content instanceof FadeInTexture) &&
-//                ((FadeInTexture) content).isAnimating()) {
-//            renderRequestFlags |= SlotView.RENDER_MORE_FRAME;
-//        }
+        drawContent(canvas, content, width, height, entry.rotation);
+        if ((content instanceof FadeInTexture) &&
+                ((FadeInTexture) content).isAnimating()) {
+            renderRequestFlags |= SlotView.RENDER_MORE_FRAME;
+        }
 //
-//        renderRequestFlags |= renderOverlay(canvas, index, entry, width, height);
+        renderRequestFlags |= renderOverlay(canvas, index, entry, width, height);
 
         return renderRequestFlags;
     }

@@ -72,8 +72,8 @@ public class TiledTexture implements Texture {
         private final GLController mGLController;
         private boolean mIsQueued = false;
 
-        public Uploader(GLController glRoot) {
-            mGLController = glRoot;
+        public Uploader(GLController glController) {
+            mGLController = glController;
         }
 
         public synchronized void clear() {
