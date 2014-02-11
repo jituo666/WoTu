@@ -12,6 +12,7 @@ import com.wotu.R;
 import com.wotu.common.WLog;
 import com.wotu.data.DataManager;
 import com.wotu.page.AlbumPage;
+import com.wotu.page.AlbumSetPage;
 import com.wotu.utils.UtilsBase;
 
 public class MainActivity extends WoTuActivity {
@@ -62,9 +63,9 @@ public class MainActivity extends WoTuActivity {
     }
 
     public void startDefaultPage() {
-        WLog.i("TAG", "startDefaultPage");
+        WLog.i(TAG, "startDefaultPage:");
         Bundle data = new Bundle();
-        data.putString(DataManager.KEY_MEDIA_PATH, getDataManager().getTopSetPath(DataManager.INCLUDE_IMAGE));
+        data.putString(DataManager.KEY_MEDIA_PATH, getDataManager().getTopSetPath(DataManager.INCLUDE_LOCAL_IMAGE_ONLY));
         getPageManager().startPage(AlbumPage.class, data);
     }
 

@@ -29,6 +29,7 @@ import android.os.SystemClock;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
+import com.wotu.common.WLog;
 import com.wotu.view.GLController;
 import com.wotu.view.GLController.OnGLIdleListener;
 
@@ -37,6 +38,9 @@ import com.wotu.view.GLController.OnGLIdleListener;
 // upload the whole bitmap but we reduce the time of uploading each tile
 // so it make the animation more smooth and prevents jank.
 public class TiledTexture implements Texture {
+
+    private static final String TAG = "TiledTexture";
+
     private static final int CONTENT_SIZE = 254;
     private static final int BORDER_SIZE = 1;
     private static final int TILE_SIZE = CONTENT_SIZE + 2 * BORDER_SIZE;

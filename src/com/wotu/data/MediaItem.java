@@ -28,11 +28,9 @@ public abstract class MediaItem extends MediaObject {
     private static final int BYTESBUFFE_POOL_SIZE = 4;
     private static final int BYTESBUFFER_SIZE = 200 * 1024;
 
-    private static final BitmapPool sMicroThumbPool = new BitmapPool(
-            MICROTHUMBNAIL_TARGET_SIZE, MICROTHUMBNAIL_TARGET_SIZE, 16);
+    private static final BitmapPool sMicroThumbPool = new BitmapPool(MICROTHUMBNAIL_TARGET_SIZE, MICROTHUMBNAIL_TARGET_SIZE, 16);
     private static final BitmapPool sThumbPool = new BitmapPool(4);
-    private static final BytesBufferPool sMicroThumbBufferPool =
-            new BytesBufferPool(BYTESBUFFE_POOL_SIZE, BYTESBUFFER_SIZE);
+    private static final BytesBufferPool sMicroThumbBufferPool = new BytesBufferPool(BYTESBUFFE_POOL_SIZE, BYTESBUFFER_SIZE);
 
     // TODO: fix default value for latlng and change this.
     public static final double INVALID_LATLNG = 0f;

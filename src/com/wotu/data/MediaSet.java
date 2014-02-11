@@ -128,13 +128,13 @@ public abstract class MediaSet extends MediaObject {
 
     public abstract String getName();
 
-    private WeakHashMap<ContentListener, Object> mListeners =
-            new WeakHashMap<ContentListener, Object>();
+    private WeakHashMap<ContentListener, Object> mListeners = new WeakHashMap<ContentListener, Object>();
 
     // NOTE: The MediaSet only keeps a weak reference to the listener. The
     // listener is automatically removed when there is no other reference to
     // the listener.
     public void addContentListener(ContentListener listener) {
+        WLog.i(TAG, "addContentListener");
         if (mListeners.containsKey(listener)) {
             throw new IllegalArgumentException();
         }
@@ -142,6 +142,7 @@ public abstract class MediaSet extends MediaObject {
     }
 
     public void removeContentListener(ContentListener listener) {
+        WLog.i(TAG, "removeContentListener");
         if (!mListeners.containsKey(listener)) {
             throw new IllegalArgumentException();
         }

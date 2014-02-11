@@ -1,19 +1,24 @@
 package com.wotu.view.layout;
 
+import android.content.Context;
 import android.graphics.Rect;
 
 import com.wotu.anim.Animation;
+import com.wotu.common.WLog;
 import com.wotu.view.SlotView.Spec;
+import com.wotu.view.ViewConfig;
 import com.wotu.view.layout.Layout;
 
 public class NormalLayout extends Layout {
+
+    private static final String TAG = "NormalLayout";
 
     protected Spec mSpec;
     private IntegerAnimation mVerticalPadding = new IntegerAnimation();
     private IntegerAnimation mHorizontalPadding = new IntegerAnimation();
 
-    public NormalLayout() {
-
+    public NormalLayout(Context context) {
+        mSpec = ViewConfig.AlbumPage.get(context).slotViewSpec;
     }
 
     @Override
@@ -52,27 +57,30 @@ public class NormalLayout extends Layout {
     // The comments inside this method are the description when the major
     // directon is horizontal (X), and the minor directon is vertical (Y).
     private void initLayoutParameters(
-            int majorLength, int minorLength, /* The view width and height */
-            int majorUnitSize, int minorUnitSize, /* The slot width and height */
+            int canvasLength, int canvasWidth, /* The view width and height */
+            int unitSizeOnLength, int unitSizeOnWidth, /*
+                                                        * The slot width and
+                                                        * height
+                                                        */
             int[] padding) {
-        int unitCount = (minorLength + mSlotGap) / (minorUnitSize + mSlotGap);
+        int unitCount = (canvasWidth + mSlotGap) / (unitSizeOnWidth + mSlotGap);
         if (unitCount == 0)
             unitCount = 1;
         mUnitCount = unitCount;
 
         // We put extra padding above and below the column.
         int availableUnits = Math.min(mUnitCount, mSlotCount);
-        int usedMinorLength = availableUnits * minorUnitSize +
-                (availableUnits - 1) * mSlotGap;
-        padding[0] = (minorLength - usedMinorLength) / 2;
+        int usedMinorLength = availableUnits * unitSizeOnWidth + (availableUnits - 1) * mSlotGap;
+        padding[0] = (canvasWidth - usedMinorLength) / 2;
 
-        // Then calculate how many columns we need for all slots.
+        // Then calculate how many rows we need for all slots.
         int count = ((mSlotCount + mUnitCount - 1) / mUnitCount);
-        mContentLength = count * majorUnitSize + (count - 1) * mSlotGap;
+        mContentLength = count * unitSizeOnLength + (count - 1) * mSlotGap;
 
+        WLog.i(TAG, "initLayoutParameters mUnitCount:" + mUnitCount + " rows:" + count);
         // If the content length is less then the screen width, put
         // extra padding in left and right.
-        padding[1] = Math.max(0, (majorLength - mContentLength) / 2);
+        padding[1] = Math.max(0, (canvasLength - mContentLength) / 2);
     }
 
     private void initLayoutParameters() {
@@ -87,7 +95,7 @@ public class NormalLayout extends Layout {
             mSlotHeight = Math.max(1, (mHeight - (rows - 1) * mSlotGap) / rows);
             mSlotWidth = mSlotHeight - mSpec.slotHeightAdditional;
         }
-
+        WLog.i(TAG, "initLayoutParameters mSlotWidth:" + mSlotWidth + " mSlotHeight:" + mSlotHeight);
         if (mRenderer != null) {
             mRenderer.onSlotSizeChanged(mSlotWidth, mSlotHeight);
         }
@@ -124,22 +132,24 @@ public class NormalLayout extends Layout {
 
     private void updateVisibleSlotRange() {
         int position = mScrollPosition;
-
+        int start, end;
         if (mWideScroll) {
             int startCol = position / (mSlotWidth + mSlotGap);
-            int start = Math.max(0, mUnitCount * startCol);
+            start = Math.max(0, mUnitCount * startCol);
             int endCol = (position + mWidth + mSlotWidth + mSlotGap - 1) /
                     (mSlotWidth + mSlotGap);
-            int end = Math.min(mSlotCount, mUnitCount * endCol);
+            end = Math.min(mSlotCount, mUnitCount * endCol);
             setVisibleRange(start, end);
         } else {
             int startRow = position / (mSlotHeight + mSlotGap);
-            int start = Math.max(0, mUnitCount * startRow);
+            start = Math.max(0, mUnitCount * startRow);
             int endRow = (position + mHeight + mSlotHeight + mSlotGap - 1) /
                     (mSlotHeight + mSlotGap);
-            int end = Math.min(mSlotCount, mUnitCount * endRow);
+            end = Math.min(mSlotCount, mUnitCount * endRow);
             setVisibleRange(start, end);
         }
+
+        WLog.i(TAG, "updateVisibleSlotRange start:" + start + " end:" + end);
     }
 
     private void setVisibleRange(int start, int end) {
@@ -199,6 +209,11 @@ public class NormalLayout extends Layout {
                 : (rowIdx * mUnitCount + columnIdx);
 
         return index >= mSlotCount ? INDEX_NONE : index;
+    }
+
+    public boolean advanceAnimation(long animTime) {
+        // use '|' to make sure both sides will be executed
+        return mVerticalPadding.calculate(animTime) | mHorizontalPadding.calculate(animTime);
     }
 
     private static class IntegerAnimation extends Animation {

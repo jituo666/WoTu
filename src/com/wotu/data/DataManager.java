@@ -1,4 +1,3 @@
-
 package com.wotu.data;
 
 import java.util.HashMap;
@@ -21,16 +20,16 @@ public class DataManager {
 
     public static final String KEY_MEDIA_PATH = "media-path";
 
-    public static final int INCLUDE_IMAGE = 1;
-    public static final int INCLUDE_VIDEO = 2;
-    public static final int INCLUDE_ALL = INCLUDE_IMAGE | INCLUDE_VIDEO;
-    public static final int INCLUDE_LOCAL_ONLY = 4;
-    public static final int INCLUDE_LOCAL_IMAGE_ONLY =
-            INCLUDE_LOCAL_ONLY | INCLUDE_IMAGE;
-    public static final int INCLUDE_LOCAL_VIDEO_ONLY =
-            INCLUDE_LOCAL_ONLY | INCLUDE_VIDEO;
-    public static final int INCLUDE_LOCAL_ALL_ONLY =
-            INCLUDE_LOCAL_ONLY | INCLUDE_IMAGE | INCLUDE_VIDEO;
+    public static final int INCLUDE_IMAGE_SET = 1;
+    public static final int INCLUDE_VIDEO_SET = 2;
+    public static final int INCLUDE_ALL_SET = INCLUDE_IMAGE_SET | INCLUDE_VIDEO_SET;
+    public static final int INCLUDE_LOCAL_SET_ONLY = 4;
+    public static final int INCLUDE_LOCAL_IMAGE_SET_ONLY =
+            INCLUDE_LOCAL_SET_ONLY | INCLUDE_IMAGE_SET;
+    public static final int INCLUDE_LOCAL_VIDEO_SET_ONLY =
+            INCLUDE_LOCAL_SET_ONLY | INCLUDE_VIDEO_SET;
+    public static final int INCLUDE_LOCAL_ALL_SET_ONLY =
+            INCLUDE_LOCAL_SET_ONLY | INCLUDE_IMAGE_SET | INCLUDE_VIDEO_SET;
 
     // This is the path for the media set seen by the user at top level.
     private static final String TOP_SET_PATH =
@@ -45,6 +44,32 @@ public class DataManager {
             "/local/image";
     private static final String TOP_LOCAL_VIDEO_SET_PATH =
             "/local/video";
+
+    public static final int INCLUDE_IMAGE = 8;
+    public static final int INCLUDE_VIDEO = 16;
+    public static final int INCLUDE_ALL = INCLUDE_IMAGE | INCLUDE_VIDEO;
+    public static final int INCLUDE_LOCAL_ONLY = 32;
+    public static final int INCLUDE_LOCAL_IMAGE_ONLY =
+            INCLUDE_LOCAL_ONLY | INCLUDE_IMAGE;
+    public static final int INCLUDE_LOCAL_VIDEO_ONLY =
+            INCLUDE_LOCAL_ONLY | INCLUDE_VIDEO;
+    public static final int INCLUDE_LOCAL_ALL_ONLY =
+            INCLUDE_LOCAL_ONLY | INCLUDE_IMAGE | INCLUDE_VIDEO;
+
+    // This is the path for the media set seen by the user at top level.
+    private static final String TOP_PATH =
+            "/combo/{/mtp/*,/local/all/*,/picasa/all/*}";
+    private static final String TOP_IMAGE_PATH =
+            "/combo/{/mtp/*,/local/image/*,/picasa/image/*}";
+    private static final String TOP_VIDEO_PATH =
+            "/combo/{/local/video/*,/picasa/video/*}";
+    private static final String TOP_LOCAL_PATH =
+            "/local/all/*";
+    private static final String TOP_LOCAL_IMAGE_PATH =
+            "/local/image/*";
+    private static final String TOP_LOCAL_VIDEO_PATH =
+            "/local/video/*";
+
     private static final String ACTION_DELETE_PICTURE = "com.android.gallery3d.action.DELETE_PICTURE";
 
     public final static Object LOCK = new Object();
@@ -60,6 +85,7 @@ public class DataManager {
     }
 
     private void addSource(MediaSource source) {
+        WLog.i(TAG, "addSource:" + source.getPrefix());
         mSourceMap.put(source.getPrefix(), source);
     }
 
@@ -88,7 +114,8 @@ public class DataManager {
         MediaObject obj = path.getObject();
         if (obj != null)
             return obj;
-        MediaSource source = mSourceMap.get(path.getPrefix());
+        WLog.i(TAG, "getMediaObject:" + path.getPrefix() + ":" + path.getPrefix().split("/")[1]);
+        MediaSource source = mSourceMap.get(path.getPrefix().split("/")[1]);
         if (source == null) {
             WLog.w(TAG, "cannot find media source for path: " + path);
             return null;
@@ -145,20 +172,33 @@ public class DataManager {
     public String getTopSetPath(int typeBits) {
 
         switch (typeBits) {
-            case INCLUDE_IMAGE:
-                return TOP_IMAGE_SET_PATH;
-            case INCLUDE_VIDEO:
-                return TOP_VIDEO_SET_PATH;
-            case INCLUDE_ALL:
-                return TOP_SET_PATH;
-            case INCLUDE_LOCAL_IMAGE_ONLY:
-                return TOP_LOCAL_IMAGE_SET_PATH;
-            case INCLUDE_LOCAL_VIDEO_ONLY:
-                return TOP_LOCAL_VIDEO_SET_PATH;
-            case INCLUDE_LOCAL_ALL_ONLY:
-                return TOP_LOCAL_SET_PATH;
-            default:
-                throw new IllegalArgumentException();
+        case INCLUDE_IMAGE_SET:
+            return TOP_IMAGE_SET_PATH;
+        case INCLUDE_VIDEO_SET:
+            return TOP_VIDEO_SET_PATH;
+        case INCLUDE_ALL_SET:
+            return TOP_SET_PATH;
+        case INCLUDE_LOCAL_IMAGE_SET_ONLY:
+            return TOP_LOCAL_IMAGE_SET_PATH;
+        case INCLUDE_LOCAL_VIDEO_SET_ONLY:
+            return TOP_LOCAL_VIDEO_SET_PATH;
+        case INCLUDE_LOCAL_ALL_SET_ONLY:
+            return TOP_LOCAL_SET_PATH;
+            //
+        case INCLUDE_IMAGE:
+            return TOP_IMAGE_SET_PATH;
+        case INCLUDE_VIDEO:
+            return TOP_VIDEO_SET_PATH;
+        case INCLUDE_ALL:
+            return TOP_PATH;
+        case INCLUDE_LOCAL_IMAGE_ONLY:
+            return TOP_LOCAL_IMAGE_PATH;
+        case INCLUDE_LOCAL_VIDEO_ONLY:
+            return TOP_LOCAL_VIDEO_PATH;
+        case INCLUDE_LOCAL_ALL_ONLY:
+            return TOP_LOCAL_PATH;
+        default:
+            throw new IllegalArgumentException();
         }
     }
 

@@ -1,21 +1,25 @@
-
 package com.wotu.view;
 
 import android.graphics.Rect;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.animation.DecelerateInterpolator;
 
 import com.wotu.activity.WoTuContext;
+import com.wotu.anim.AnimTimer;
+import com.wotu.anim.Animation;
 import com.wotu.common.SynchronizedHandler;
+import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.event.AlbumGestureListener;
 import com.wotu.view.event.ScrollerHelper;
 import com.wotu.view.event.UserInteractionListener;
 import com.wotu.view.layout.Layout;
-import com.wotu.view.layout.NormalLayout;
 import com.wotu.view.opengl.GLCanvas;
 
 public class SlotView extends GLView {
+
+    private static final String TAG = "SlotView";
 
     private WoTuContext mContext;
 
@@ -30,16 +34,19 @@ public class SlotView extends GLView {
     private int mOverscrollEffect = OVERSCROLL_3D;
 
     private Layout mLayout;
+    private boolean mMoreAnimation = false;
+    private SlotAnimation mAnimation = null;
+
+    private int[] mRequestRenderSlots = new int[16];
     private SlotRenderer mRenderer;
     private Paper mPaper = new Paper();
     private final GestureDetector mGestureDetector;
+    private AlbumGestureListener mAlbumGestureListener;
     private final ScrollerHelper mScroller;
     private GestureListener mGestureListener;
     private UserInteractionListener mUIListener;
     private final SynchronizedHandler mHandler;
     private boolean mDownInScrolling;
-
-    private GestureListener mListener;
     // to prevent allocating memory
     private final Rect mTempRect = new Rect();
 
@@ -87,6 +94,22 @@ public class SlotView extends GLView {
         public int renderSlot(GLCanvas canvas, int index, int pass, int width, int height);
     }
 
+    public static abstract class SlotAnimation extends Animation {
+        protected float mProgress = 0;
+
+        public SlotAnimation() {
+            setInterpolator(new DecelerateInterpolator(4));
+            setDuration(1500);
+        }
+
+        @Override
+        protected void onCalculate(float progress) {
+            mProgress = progress;
+        }
+
+        abstract public void apply(GLCanvas canvas, int slotIndex, Rect target);
+    }
+
     // This Spec class is used to specify the size of each slot in the SlotView.
     // There are two ways to do it:
     //
@@ -120,13 +143,15 @@ public class SlotView extends GLView {
 
     public SlotView(WoTuContext context) {
         mContext = context;
-        mGestureDetector = new GestureDetector(context.getAndroidContext(), new AlbumGestureListener(mContext, this));
+        mAlbumGestureListener = new AlbumGestureListener(mContext, this);
+        mGestureDetector = new GestureDetector(context.getAndroidContext(), mAlbumGestureListener);
         mScroller = new ScrollerHelper(mContext.getAndroidContext());
         mHandler = new SynchronizedHandler(mContext.getGLController());
     }
 
     public void setSlotLayout(Layout layout) {
         mLayout = layout;
+        mAlbumGestureListener.setLayout(layout);
     }
 
     public void setSlotRenderer(SlotRenderer render) {
@@ -140,8 +165,14 @@ public class SlotView extends GLView {
 
     public void setGestureListener(GestureListener listener) {
         mGestureListener = listener;
+        mAlbumGestureListener.setGestureListener(listener);
     }
 
+    public void setUserInteractionListener(UserInteractionListener listener) {
+        mUIListener = listener;
+        mAlbumGestureListener.setUserInteractionListener(listener);
+    }
+    
     @Override
     protected void onLayout(boolean changeSize, int l, int t, int r, int b) {
         if (!changeSize)
@@ -213,12 +244,111 @@ public class SlotView extends GLView {
 
     protected void onScrollPositionChanged(int newPosition) {
         int limit = mLayout.getScrollLimit();
-        mListener.onScrollPositionChanged(newPosition, limit);
+        mGestureListener.onScrollPositionChanged(newPosition, limit);
+    }
+
+    private int renderItem(GLCanvas canvas, int index, int pass, boolean paperActive) {
+        canvas.save(GLCanvas.SAVE_FLAG_ALPHA | GLCanvas.SAVE_FLAG_MATRIX);
+        Rect rect = mLayout.getSlotRect(index, mTempRect);
+        if (paperActive) {
+            canvas.multiplyMatrix(mPaper.getTransform(rect, mScrollX), 0);
+        } else {
+            canvas.translate(rect.left, rect.top, 0);
+        }
+        if (mAnimation != null && mAnimation.isActive()) {
+            mAnimation.apply(canvas, index, rect);
+        }
+        WLog.i(TAG, " position-x:" + rect.left + " position-y:" + rect.top);
+        int result = mRenderer.renderSlot(canvas, index, pass, rect.right - rect.left, rect.bottom - rect.top);
+        canvas.restore();
+        return result;
     }
 
     @Override
     protected void render(GLCanvas canvas) {
-        super.render(canvas);
+//        super.render(canvas);
+//
+//        if (mRenderer == null)
+//            return;
+//        mRenderer.prepareDrawing();
+//
+//        long animTime = AnimTimer.get();
+//        boolean more = mScroller.advanceAnimation(animTime);
+//        int oldX = mScrollX;
+//        updateScrollPosition(mScroller.getPosition(), false);
+//
+//        boolean paperActive = false;
+//        if (mOverscrollEffect == OVERSCROLL_3D) {
+//            // Check if an edge is reached and notify mPaper if so.
+//            int newX = mScrollX;
+//            int limit = mLayout.getScrollLimit();
+//            if (oldX > 0 && newX == 0 || oldX < limit && newX == limit) {
+//                float v = mScroller.getCurrVelocity();
+//                if (newX == limit)
+//                    v = -v;
+//
+//                // I don't know why, but getCurrVelocity() can return NaN.
+//                if (!Float.isNaN(v)) {
+//                    mPaper.edgeReached(v);
+//                }
+//            }
+//            paperActive = mPaper.advanceAnimation();
+//        }
+//
+//        more |= paperActive;
+//
+//        if (mAnimation != null) {
+//            more |= mAnimation.calculate(animTime);
+//        }
+//
+//        canvas.translate(-mScrollX, -mScrollY);
+//
+//        int requestCount = 0;
+//        int requestedSlot[] = expandIntArray(mRequestRenderSlots, mLayout.getVisibleEnd() - mLayout.getVisibleStart());
+//
+//        for (int i = mLayout.getVisibleEnd() - 1; i >= mLayout.getVisibleStart(); --i) {
+//            int r = renderItem(canvas, i, 0, paperActive);
+//            if ((r & RENDER_MORE_FRAME) != 0)
+//                more = true;
+//            if ((r & RENDER_MORE_PASS) != 0)
+//                requestedSlot[requestCount++] = i;
+//        }
+//
+//        for (int pass = 1; requestCount != 0; ++pass) {
+//            int newCount = 0;
+//            for (int i = 0; i < requestCount; ++i) {
+//                int r = renderItem(canvas,
+//                        requestedSlot[i], pass, paperActive);
+//                if ((r & RENDER_MORE_FRAME) != 0)
+//                    more = true;
+//                if ((r & RENDER_MORE_PASS) != 0)
+//                    requestedSlot[newCount++] = i;
+//            }
+//            requestCount = newCount;
+//        }
+//
+//        canvas.translate(mScrollX, mScrollY);
+//
+//        if (more)
+//            invalidate();
+//
+//        final UserInteractionListener listener = mUIListener;
+//        if (mMoreAnimation && !more && listener != null) {
+//            mHandler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    listener.onUserInteractionEnd();
+//                }
+//            });
+//        }
+//        mMoreAnimation = more;
+    }
+
+    private static int[] expandIntArray(int array[], int capacity) {
+        while (array.length < capacity) {
+            array = new int[array.length * 2];
+        }
+        return array;
     }
 
     public Rect getSlotRect(int slotIndex) {
@@ -259,14 +389,14 @@ public class SlotView extends GLView {
             mUIListener.onUserInteraction();
         mGestureDetector.onTouchEvent(event);
         switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mDownInScrolling = !mScroller.isFinished();
-                mScroller.forceFinished();
-                break;
-            case MotionEvent.ACTION_UP:
-                mPaper.onRelease();
-                invalidate();
-                break;
+        case MotionEvent.ACTION_DOWN:
+            mDownInScrolling = !mScroller.isFinished();
+            mScroller.forceFinished();
+            break;
+        case MotionEvent.ACTION_UP:
+            mPaper.onRelease();
+            invalidate();
+            break;
         }
         return true;
     }

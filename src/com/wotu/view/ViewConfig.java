@@ -5,7 +5,7 @@ import android.content.res.Resources;
 
 import com.wotu.R;
 
-final class ViewConfig {
+public final class ViewConfig {
     public static class AlbumSetPage {
         private static AlbumSetPage sInstance;
 

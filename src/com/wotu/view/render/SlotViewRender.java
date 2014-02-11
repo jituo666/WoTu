@@ -1,20 +1,21 @@
 package com.wotu.view.render;
 
-import android.graphics.Color;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.app.MediaSelector;
+import com.wotu.common.WLog;
 import com.wotu.data.Path;
 import com.wotu.data.load.AlbumDataLoader;
 import com.wotu.view.SlotView;
 import com.wotu.view.adapter.AlbumDataWindow;
 import com.wotu.view.opengl.ColorTexture;
-import com.wotu.view.opengl.FadeInTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.Texture;
 import com.wotu.view.opengl.TiledTexture;
 
 public class SlotViewRender extends SlotViewRenderBase {
+
+    private static final String TAG = "SlotViewRender";
 
     private WoTuContext mContext;
     private AlbumDataWindow mDataWindow;
@@ -22,12 +23,12 @@ public class SlotViewRender extends SlotViewRenderBase {
     private Path mHighlightItemPath = null;
     private SlotFilter mSlotFilter;
 
-    private static final int PLACE_HOLDER_COLOR = Color.BLACK;
+    private static final int PLACE_HOLDER_COLOR = 0xFF222222;
     private static final int CACHE_SIZE = 96;
 
     private final ColorTexture mWaitLoadingTexture;
     private final int mPlaceholderColor = PLACE_HOLDER_COLOR;
-    
+
     private int mPressedIndex = -1;
     private boolean mAnimatePressedUp;
     private MediaSelector mMediaSelector;
@@ -52,6 +53,7 @@ public class SlotViewRender extends SlotViewRenderBase {
     public SlotViewRender(WoTuContext context, SlotView slotView, MediaSelector selector) {
         super(context.getAndroidContext());
         mContext = context;
+        mSlotView = slotView;
         mMediaSelector = selector;
         mWaitLoadingTexture = new ColorTexture(mPlaceholderColor);
         mWaitLoadingTexture.setSize(1, 1);
@@ -100,36 +102,37 @@ public class SlotViewRender extends SlotViewRenderBase {
 
     private static Texture checkTexture(Texture texture) {
         return (texture instanceof TiledTexture)
-                && !((TiledTexture) texture).isReady()
-                ? null
-                : texture;
+                && !((TiledTexture) texture).isReady() ? null : texture;
     }
-    
+
     @Override
     public int renderSlot(GLCanvas canvas, int index, int pass, int width, int height) {
         if (mSlotFilter != null && !mSlotFilter.acceptSlot(index))
             return 0;
 
-        AlbumDataWindow.AlbumEntry entry = mDataWindow.get(index);
+//        AlbumDataWindow.AlbumEntry entry = mDataWindow.get(index);
 
         int renderRequestFlags = 0;
 
-        Texture content = checkTexture(entry.content);
-        if (content == null) {
-            content = mWaitLoadingTexture;
-            entry.isWaitDisplayed = true;
-        } else if (entry.isWaitDisplayed) {
-            entry.isWaitDisplayed = false;
-            content = new FadeInTexture(mPlaceholderColor, entry.bitmapTexture);
-            entry.content = content;
-        }
-        drawContent(canvas, content, width, height, entry.rotation);
-        if ((content instanceof FadeInTexture) &&
-                ((FadeInTexture) content).isAnimating()) {
-            renderRequestFlags |= SlotView.RENDER_MORE_FRAME;
-        }
+//        Texture content = null;//checkTexture(entry.content);
+        //if (content == null) {
+//            content = mWaitLoadingTexture;
+//            entry.isWaitDisplayed = true;
+//            WLog.d(TAG, "renderSlot index:" + index + " mWaitLoadingTexture");
+//        } else if (entry.isWaitDisplayed) {
+//            entry.isWaitDisplayed = false;
+//            content = new FadeInTexture(mPlaceholderColor, entry.bitmapTexture);
+//            entry.content = content;
+//            WLog.d(TAG, "renderSlot index:" + index + " bitmapTexture:" + (entry.bitmapTexture == null));
+//        }
 
-        renderRequestFlags |= renderOverlay(canvas, index, entry, width, height);
+//        drawContent(canvas, content, width, height, entry.rotation);
+//        if ((content instanceof FadeInTexture) &&
+//                ((FadeInTexture) content).isAnimating()) {
+//            renderRequestFlags |= SlotView.RENDER_MORE_FRAME;
+//        }
+//
+//        renderRequestFlags |= renderOverlay(canvas, index, entry, width, height);
 
         return renderRequestFlags;
     }

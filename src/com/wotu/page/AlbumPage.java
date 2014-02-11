@@ -256,7 +256,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     private void initializeViews() {
         mSlotView = new SlotView(mContext);
-        mSlotView.setSlotLayout(new NormalLayout());
+        mSlotView.setSlotLayout(new NormalLayout(mContext.getAndroidContext()));
         mRender = new SlotViewRender(mContext, mSlotView, mSelector);
         mSlotView.setSlotRenderer(mRender);
         mRender.setModel(mAlbumDataLoader);
@@ -285,7 +285,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     }
 
     private void initializeData(Bundle data) {
-        mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 0);
+        mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), -48385503);
         mData = mContext.getDataManager().getMediaSet(mDataPath);
         if (mData == null) {
             UtilsBase.fail("MediaSet is null. Path = %s", mDataPath);
@@ -348,6 +348,11 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     @Override
     protected void onPause() {
         super.onPause();
+        mIsActive = false;
+        mRender.setSlotFilter(null);
+        mAlbumDataLoader.pause();
+        mRender.pause();
+        DetailsHelper.pause();
         if (mSyncTask != null) {
             mSyncTask.cancel();
             mSyncTask = null;

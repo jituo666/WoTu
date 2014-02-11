@@ -41,16 +41,19 @@ public class LocalSource extends MediaSource {
         super("local");
         mApplication = context;
         mMatcher = new PathMatcher();
+        //set
         mMatcher.add("/local/image", LOCAL_IMAGE_ALBUMSET);
         mMatcher.add("/local/video", LOCAL_VIDEO_ALBUMSET);
         mMatcher.add("/local/all", LOCAL_ALL_ALBUMSET);
 
+        //album
         mMatcher.add("/local/image/*", LOCAL_IMAGE_ALBUM);
         mMatcher.add("/local/video/*", LOCAL_VIDEO_ALBUM);
         mMatcher.add("/local/all/*", LOCAL_ALL_ALBUM);
         mMatcher.add("/local/image/item/*", LOCAL_IMAGE_ITEM);
         mMatcher.add("/local/video/item/*", LOCAL_VIDEO_ITEM);
 
+        //item
         mUriMatcher.addURI(MediaStore.AUTHORITY,
                 "external/images/media/#", LOCAL_IMAGE_ITEM);
         mUriMatcher.addURI(MediaStore.AUTHORITY,

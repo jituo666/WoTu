@@ -113,7 +113,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         WLog.i(TAG, "onDrawFrame ");
         AnimTimer.update();
         gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);// 设置背景色
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+        //gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         mRenderLock.lock();
         while (mFreeze) {
             mFreezeCondition.awaitUninterruptibly();

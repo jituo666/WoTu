@@ -21,17 +21,23 @@ public class AlbumGestureListener implements GestureDetector.OnGestureListener {
     private UserInteractionListener mUIListener;
 
     public AlbumGestureListener(WoTuContext context, SlotView slotView) {
-        mSlotView = slotView;
-        mLayout = mSlotView.getLayout();
         mContext = context;
+        mSlotView = slotView;
         mScroller = new ScrollerHelper(mContext.getAndroidContext());
     }
 
-    public void setListener(GestureListener listener, UserInteractionListener uiListener) {
-        mListener = listener;
-        mUIListener = uiListener;
+    public void setLayout(Layout layout) {
+        mLayout = layout;
     }
 
+    public void setGestureListener(GestureListener listener) {
+        mListener = listener;
+    }
+
+    public void setUserInteractionListener( UserInteractionListener uiListener) {
+        mUIListener = uiListener;
+    }
+    
     /*
      * We call the listener's onDown() when our onShowPress() is called and call
      * the listener's onUp() when we receive any further event.
@@ -85,8 +91,7 @@ public class AlbumGestureListener implements GestureDetector.OnGestureListener {
             MotionEvent e2, float distanceX, float distanceY) {
         cancelDown(false);
         float distance = SlotView.WIDE_SCROLL ? distanceX : distanceY;
-        int overDistance = mScroller.startScroll(
-                Math.round(distance), 0, mLayout.getScrollLimit());
+        int overDistance = mScroller.startScroll(Math.round(distance), 0, mLayout.getScrollLimit());
         if (mOverscrollEffect == SlotView.OVERSCROLL_3D && overDistance != 0) {
             mSlotView.getPaper().overScroll(overDistance);
         }

@@ -4,7 +4,6 @@ import android.graphics.Rect;
 
 import com.wotu.view.SlotView;
 import com.wotu.view.SlotView.SlotRenderer;
-import com.wotu.view.SlotView.Spec;
 
 public abstract class Layout {
 

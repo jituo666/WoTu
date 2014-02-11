@@ -5,6 +5,7 @@ import android.os.Process;
 
 import com.wotu.activity.WoTuContext;
 import com.wotu.common.SynchronizedHandler;
+import com.wotu.common.WLog;
 import com.wotu.data.ContentListener;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
@@ -63,7 +64,6 @@ public class AlbumDataLoader {
 
     public AlbumDataLoader(WoTuContext context, MediaSet mediaSet) {
         mSource = mediaSet;
-
         mData = new MediaItem[DATA_CACHE_SIZE];
         mItemVersion = new long[DATA_CACHE_SIZE];
         mSetVersion = new long[DATA_CACHE_SIZE];
@@ -153,8 +153,6 @@ public class AlbumDataLoader {
             mContentStart = contentStart;
             mContentEnd = contentEnd;
         }
-        long[] itemVersion = mItemVersion;
-        long[] setVersion = mSetVersion;
         if (contentStart >= end || start >= contentEnd) {
             for (int i = start, n = end; i < n; ++i) {
                 clearSlot(i % DATA_CACHE_SIZE);
@@ -171,6 +169,10 @@ public class AlbumDataLoader {
             mReloadTask.notifyDirty();
     }
 
+    /**
+     * 1,set image/video's meta data activate range
+     * 2,set iamge/video's meta data cache range
+     */
     public void setActiveWindow(int start, int end) {
         if (start == mActiveStart && end == mActiveEnd)
             return;
@@ -186,16 +188,17 @@ public class AlbumDataLoader {
         if (start == end)
             return;
 
-        int contentStart = UtilsBase.clamp((start + end) / 2 - length / 2,
-                0, Math.max(0, mSize - length));
+        int contentStart = UtilsBase.clamp((start + end) / 2 - length / 2, 0, Math.max(0, mSize - length));
         int contentEnd = Math.min(contentStart + length, mSize);
-        if (mContentStart > start || mContentEnd < end
-                || Math.abs(contentStart - mContentStart) > MIN_LOAD_COUNT) {
+        if (mContentStart > start || mContentEnd < end || Math.abs(contentStart - mContentStart) > MIN_LOAD_COUNT) {
             setContentWindow(contentStart, contentEnd);
         }
+        WLog.i(TAG, "setActiveWindow mActiveStart:" + mActiveStart + " mActiveEnd:" + mActiveEnd + " contentStart:" + contentStart
+                + " contentEnd:" + contentEnd);
     }
 
     private class MySourceListener implements ContentListener {
+        @Override
         public void onContentDirty() {
             if (mReloadTask != null)
                 mReloadTask.notifyDirty();
@@ -250,6 +253,7 @@ public class AlbumDataLoader {
                 if (setVersion[index] != version) {
                     info.reloadStart = i;
                     info.reloadCount = Math.min(MAX_LOAD_COUNT, n - i);
+                    WLog.i(TAG, " info.reloadCount:" + info.reloadCount);
                     return info;
                 }
             }

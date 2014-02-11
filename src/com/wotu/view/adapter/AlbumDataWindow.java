@@ -8,6 +8,7 @@ import com.wotu.common.Future;
 import com.wotu.common.FutureListener;
 import com.wotu.common.JobLimiter;
 import com.wotu.common.SynchronizedHandler;
+import com.wotu.common.WLog;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
 import com.wotu.data.image.BitmapLoader;
@@ -17,8 +18,9 @@ import com.wotu.view.opengl.Texture;
 import com.wotu.view.opengl.TiledTexture;
 
 /**
- * control the data window ,[activate range], [content range]
- * 
+ * control the data window ,[activate range:media data], [content range: meta data]
+ * 1,cache image
+ * 2,compute meta data cache range
  * @author jetoo
  * 
  */
@@ -126,6 +128,10 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         mContentEnd = contentEnd;
     }
 
+    /**
+     * 1,set image or video cache range.
+     * 2,set image's/video's meta data range.
+     */
     public void setActiveWindow(int start, int end) {
         if (!(start <= end && end - start <= mData.length && end <= mSize)) {
             UtilsBase.fail("%s, %s, %s, %s", start, end, mData.length, mSize);
@@ -138,10 +144,11 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         int contentStart = UtilsBase.clamp((start + end) / 2 - data.length / 2,
                 0, Math.max(0, mSize - data.length));
         int contentEnd = Math.min(contentStart + data.length, mSize);
+        WLog.i(TAG, "setActiveWindow mActiveStart:" + mActiveStart + " mActiveEnd:" + mActiveEnd
+                + " contentStart:" + contentStart + " contentEnd:" + contentEnd);
         setContentWindow(contentStart, contentEnd);
         updateTextureUploadQueue();
-        if (mIsActive)
-            updateAllImageRequests();
+        if (mIsActive) updateAllImageRequests();
     }
 
     public AlbumEntry get(int slotIndex) {
@@ -233,9 +240,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         AlbumEntry entry = new AlbumEntry();
         MediaItem item = mDataSource.get(slotIndex); // item could be null;
         entry.item = item;
-        entry.mediaType = (item == null)
-                ? MediaItem.MEDIA_TYPE_UNKNOWN
-                : entry.item.getMediaType();
+        entry.mediaType = (item == null) ? MediaItem.MEDIA_TYPE_UNKNOWN : entry.item.getMediaType();
         entry.path = (item == null) ? null : item.getPath();
         entry.rotation = (item == null) ? 0 : item.getRotation();
         entry.contentLoader = new ThumbnailLoader(slotIndex, entry.item);
@@ -280,8 +285,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
         @Override
         protected Future<Bitmap> submitBitmapTask(FutureListener<Bitmap> l) {
-            return mThreadPool.submit(
-                    mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
+            return mThreadPool.submit(mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
         }
 
         @Override
@@ -296,7 +300,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
             AlbumEntry entry = mData[mSlotIndex % mData.length];
             entry.bitmapTexture = new TiledTexture(bitmap);
             entry.content = entry.bitmapTexture;
-
+//
             if (isActiveSlot(mSlotIndex)) {
                 mTileUploader.addTexture(entry.bitmapTexture);
                 --mActiveRequestCount;
@@ -307,12 +311,12 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
             } else {
                 mTileUploader.addTexture(entry.bitmapTexture);
             }
+            WLog.i(TAG, "ThumbnailLoader updateEntry mSlotIndex:" + mSlotIndex + " texture is null:" + (entry.bitmapTexture==null));
         }
 
         @Override
         protected void recycleBitmap(Bitmap bitmap) {
-            // TODO Auto-generated method stub
-
+            MediaItem.getMicroThumbPool().recycle(bitmap);
         }
     }
 
@@ -336,11 +340,23 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
     @Override
     public void onContentChanged(int index) {
-
+        if (index >= mContentStart && index < mContentEnd && mIsActive) {
+            freeSlotContent(index);
+            prepareSlotContent(index);
+            updateAllImageRequests();
+            if (mDataListener != null && isActiveSlot(index)) {
+                mDataListener.onContentChanged();
+            }
+        }
     }
 
     @Override
     public void onSizeChanged(int size) {
-
+        if (mSize != size) {
+            mSize = size;
+            if (mDataListener != null) mDataListener.onSizeChanged(mSize);
+            if (mContentEnd > mSize) mContentEnd = mSize;
+            if (mActiveEnd > mSize) mActiveEnd = mSize;
+        }
     }
 }

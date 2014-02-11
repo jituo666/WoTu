@@ -18,6 +18,7 @@ public class WoTuAppImpl extends Application implements WoTuApp {
     public synchronized DataManager getDataManager() {
         if (mDataManager == null) {
             mDataManager = new DataManager(this);
+            mDataManager.initializeSourceMap();
         }
         return mDataManager;
     }
