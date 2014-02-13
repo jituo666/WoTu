@@ -44,15 +44,30 @@ public class GLView {
     protected int mScrollX = 0;
     protected int mScrollY = 0;
 
+    private float [] mBackgroundColor;
+    
     // 渲染
     protected void render(GLCanvas canvas) {
         renderBackground(canvas);
+        canvas.save();
         for (int i = 0, n = getChildCount(); i < n; ++i) {
             renderChild(canvas, getChild(i));
         }
+        canvas.restore();
+    }
+
+    public float [] getBackgroundColor() {
+        return mBackgroundColor;
+    }
+
+    public void setBackgroundColor(float [] color) {
+        mBackgroundColor = color;
     }
 
     protected void renderBackground(GLCanvas view) {
+        if (mBackgroundColor != null) {
+            view.clearBuffer(mBackgroundColor);
+        }
     }
 
     protected void renderChild(GLCanvas canvas, GLView component) {

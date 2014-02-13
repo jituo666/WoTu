@@ -32,8 +32,8 @@ public class GLES11Canvas implements GLCanvas {
     private static final int OFFSET_DRAW_RECT = 6;
 
     private static final float[] BOX_COORDINATES = {
-            0, 0, 1, 0, 0, 1, 1, 1,  // used for filling a rectangle
-            0, 0, 1, 1,              // used for drawing a line
+            0, 0, 1, 0, 0, 1, 1, 1, // used for filling a rectangle
+            0, 0, 1, 1, // used for drawing a line
             0, 0, 0, 1, 1, 1, 1, 0
     }; // used for drawing the outline of a rectangle
 
@@ -72,7 +72,7 @@ public class GLES11Canvas implements GLCanvas {
     private int mCountTextureOES;
 
     private boolean mBlendEnabled = true;
-    
+
     private static float[] sCropRect = new float[4];
     private static GLId mGLId = new GLES11IdImpl();
 
@@ -155,11 +155,6 @@ public class GLES11Canvas implements GLCanvas {
             Matrix.translateM(matrix, 0, 0, height, 0);
             Matrix.scaleM(matrix, 0, 1, -1, 1);
         }
-    }
-
-    @Override
-    public void clearBuffer() {
-        mGL.glClear(GL10.GL_COLOR_BUFFER_BIT);
     }
 
     @Override
@@ -307,8 +302,7 @@ public class GLES11Canvas implements GLCanvas {
         drawTexture(texture, x, y, width, height, mAlpha);
     }
 
-    private void drawTexture(BasicTexture texture,
-            int x, int y, int width, int height, float alpha) {
+    private void drawTexture(BasicTexture texture, int x, int y, int width, int height, float alpha) {
         if (width <= 0 || height <= 0)
             return;
 
@@ -559,27 +553,27 @@ public class GLES11Canvas implements GLCanvas {
         if (status != GL11ExtensionPack.GL_FRAMEBUFFER_COMPLETE_OES) {
             String msg = "";
             switch (status) {
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_FORMATS_OES:
-                    msg = "FRAMEBUFFER_FORMATS";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES:
-                    msg = "FRAMEBUFFER_ATTACHMENT";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES:
-                    msg = "FRAMEBUFFER_MISSING_ATTACHMENT";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_OES:
-                    msg = "FRAMEBUFFER_DRAW_BUFFER";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_OES:
-                    msg = "FRAMEBUFFER_READ_BUFFER";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_UNSUPPORTED_OES:
-                    msg = "FRAMEBUFFER_UNSUPPORTED";
-                    break;
-                case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_OES:
-                    msg = "FRAMEBUFFER_INCOMPLETE_DIMENSIONS";
-                    break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_FORMATS_OES:
+                msg = "FRAMEBUFFER_FORMATS";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES:
+                msg = "FRAMEBUFFER_ATTACHMENT";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES:
+                msg = "FRAMEBUFFER_MISSING_ATTACHMENT";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_OES:
+                msg = "FRAMEBUFFER_DRAW_BUFFER";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_OES:
+                msg = "FRAMEBUFFER_READ_BUFFER";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_UNSUPPORTED_OES:
+                msg = "FRAMEBUFFER_UNSUPPORTED";
+                break;
+            case GL11ExtensionPack.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_OES:
+                msg = "FRAMEBUFFER_INCOMPLETE_DIMENSIONS";
+                break;
             }
             throw new RuntimeException(msg + ":" + Integer.toHexString(status));
         }
@@ -871,9 +865,8 @@ public class GLES11Canvas implements GLCanvas {
     @Override
     public void drawMixed(BasicTexture from, int toColor, float ratio, RectF src, RectF target) {
         // TODO Auto-generated method stub
-        
-    }
 
+    }
 
     @Override
     public void setTextureParameters(BasicTexture texture) {
@@ -936,8 +929,7 @@ public class GLES11Canvas implements GLCanvas {
         mGLId.glGenBuffers(bufferIds.length, bufferIds, 0);
         int bufferId = bufferIds[0];
         mGL.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferId);
-        mGL.glBufferData(GL11.GL_ARRAY_BUFFER, buf.capacity() * elementSize, buf,
-                GL11.GL_STATIC_DRAW);
+        mGL.glBufferData(GL11.GL_ARRAY_BUFFER, buf.capacity() * elementSize, buf, GL11.GL_STATIC_DRAW);
         return bufferId;
     }
 
@@ -958,7 +950,16 @@ public class GLES11Canvas implements GLCanvas {
 
     @Override
     public void clearBuffer(float[] argb) {
-        // TODO Auto-generated method stub
-        
+        if (argb != null && argb.length == 4) {
+            mGL.glClearColor(argb[1], argb[2], argb[3], argb[0]);
+        } else {
+            mGL.glClearColor(0, 0, 0, 1);
+        }
+        mGL.glClear(GL10.GL_COLOR_BUFFER_BIT);
+    }
+
+    @Override
+    public void clearBuffer() {
+        clearBuffer(null);
     }
 }

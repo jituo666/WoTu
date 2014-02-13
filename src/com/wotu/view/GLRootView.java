@@ -112,7 +112,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     public void onDrawFrame(GL10 gl) {
         WLog.i(TAG, "onDrawFrame ");
         AnimTimer.update();
-        gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);// 设置背景色
         //gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         mRenderLock.lock();
         while (mFreeze) {
@@ -153,6 +152,9 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         rotateCanvas(-mCompensation);
         if (mContentView != null) {
             mContentView.render(mCanvas); //绘制各个子views
+        } else {
+            // Make sure we always draw something to prevent displaying garbage
+            mCanvas.clearBuffer();
         }
         mCanvas.restore();
 
@@ -174,7 +176,23 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         }
     }
 
-    //----------------------------------------end Open gl rendering----------------------------------------
+    private void rotateCanvas(int degrees) {
+        if (degrees == 0)
+            return;
+        int w = getWidth();
+        int h = getHeight();
+        int cx = w / 2;
+        int cy = h / 2;
+        mCanvas.translate(cx, cy);
+        mCanvas.rotate(degrees, 0, 0, 1);
+        if (degrees % 180 != 0) {
+            mCanvas.translate(-cy, -cx);
+        } else {
+            mCanvas.translate(-cx, -cy);
+        }
+    }
+
+    //----------------------------------------End Open gl rendering----------------------------------------
 
     @Override
     public void requestRender() {
@@ -245,22 +263,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         }
     }
 
-    private void rotateCanvas(int degrees) {
-        if (degrees == 0)
-            return;
-        int w = getWidth();
-        int h = getHeight();
-        int cx = w / 2;
-        int cy = h / 2;
-        mCanvas.translate(cx, cy);
-        mCanvas.rotate(degrees, 0, 0, 1);
-        if (degrees % 180 != 0) {
-            mCanvas.translate(-cy, -cx);
-        } else {
-            mCanvas.translate(-cx, -cy);
-        }
-    }
-
     @Override
     public void lockRenderThread() {
         mRenderLock.lock();
@@ -318,8 +320,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
             return false;
 
         int action = event.getAction();
-        if (action == MotionEvent.ACTION_CANCEL
-                || action == MotionEvent.ACTION_UP) {
+        if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
             mInDownState = false;
         } else if (!mInDownState && action != MotionEvent.ACTION_DOWN) {
             return false;
@@ -363,8 +364,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         if (mContentView != null) {
             if (mInDownState) {
                 long now = SystemClock.uptimeMillis();
-                MotionEvent cancelEvent = MotionEvent.obtain(
-                        now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+                MotionEvent cancelEvent = MotionEvent.obtain(now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
                 mContentView.dispatchTouchEvent(cancelEvent);
                 cancelEvent.recycle();
                 mInDownState = false;
@@ -418,15 +418,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         super.onDetachedFromWindow();
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            unfreeze();
-        } finally {
-            super.finalize();
-        }
-    }
-
     private static void checkGLError(GL gl) {
         int error = ((GL10) gl).glGetError();
         if (error != GL10.GL_NO_ERROR) {
@@ -470,4 +461,12 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         }
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            unfreeze();
+        } finally {
+            super.finalize();
+        }
+    }
 }

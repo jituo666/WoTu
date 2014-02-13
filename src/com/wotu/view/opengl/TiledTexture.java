@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2012 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.wotu.view.opengl;
 
 import android.graphics.Bitmap;
@@ -24,14 +8,9 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
-import android.os.SystemClock;
-
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import com.wotu.common.WLog;
-import com.wotu.view.GLController;
-import com.wotu.view.GLController.OnGLIdleListener;
 
 // This class is similar to BitmapTexture, except the bitmap is
 // split into tiles. By doing so, we may increase the time required to
@@ -44,11 +23,6 @@ public class TiledTexture implements Texture {
     private static final int CONTENT_SIZE = 254;
     private static final int BORDER_SIZE = 1;
     private static final int TILE_SIZE = CONTENT_SIZE + 2 * BORDER_SIZE;
-    private static final int INIT_CAPACITY = 8;
-
-    // We are targeting at 60fps, so we have 16ms for each frame.
-    // In this 16ms, we use about 4~8 ms to upload tiles.
-    private static final long UPLOAD_TILE_LIMIT = 4; // ms
 
     private static Tile sFreeTileHead = null;
     private static final Object sFreeTileLock = new Object();
@@ -65,53 +39,6 @@ public class TiledTexture implements Texture {
     private final int mHeight;
     private final RectF mSrcRect = new RectF();
     private final RectF mDestRect = new RectF();
-
-    public static class Uploader implements OnGLIdleListener {
-        private final ArrayDeque<TiledTexture> mTextures = new ArrayDeque<TiledTexture>(INIT_CAPACITY);
-
-        private final GLController mGLController;
-        private boolean mIsQueued = false;
-
-        public Uploader(GLController glController) {
-            mGLController = glController;
-        }
-
-        public synchronized void clear() {
-            mTextures.clear();
-        }
-
-        public synchronized void addTexture(TiledTexture t) {
-            if (t.isReady())
-                return;
-            mTextures.addLast(t);
-
-            if (mIsQueued)
-                return;
-            mIsQueued = true;
-            mGLController.addOnGLIdleListener(this);
-        }
-
-        @Override
-        public boolean onGLIdle(GLCanvas canvas, boolean renderRequested) {
-            ArrayDeque<TiledTexture> deque = mTextures;
-            synchronized (this) {
-                long now = SystemClock.uptimeMillis();
-                long dueTime = now + UPLOAD_TILE_LIMIT;
-                while (now < dueTime && !deque.isEmpty()) {
-                    TiledTexture t = deque.peekFirst();
-                    if (t.uploadNextTile(canvas)) {
-                        deque.removeFirst();
-                        mGLController.requestRender();
-                    }
-                    now = SystemClock.uptimeMillis();
-                }
-                mIsQueued = !mTextures.isEmpty();
-
-                // return true to keep this listener in the queue
-                return mIsQueued;
-            }
-        }
-    }
 
     private static class Tile extends UploadedTexture {
         public int offsetX;
@@ -186,7 +113,7 @@ public class TiledTexture implements Texture {
         }
     }
 
-    private boolean uploadNextTile(GLCanvas canvas) {
+    public boolean uploadNextTile(GLCanvas canvas) {
         if (mUploadIndex == mTiles.length)
             return true;
 
@@ -204,7 +131,7 @@ public class TiledTexture implements Texture {
                 // at the same time. It may cause a UI jank even these textures has
                 // been uploaded.
                 if (!hasBeenLoad)
-                    next.draw(canvas, 0, 0);
+                    next.draw(canvas, 100, 100);
             }
         }
         return mUploadIndex == mTiles.length;
@@ -221,8 +148,7 @@ public class TiledTexture implements Texture {
                 tile.offsetX = x;
                 tile.offsetY = y;
                 tile.bitmap = bitmap;
-                tile.setSize(
-                        Math.min(CONTENT_SIZE, mWidth - x),
+                tile.setSize(Math.min(CONTENT_SIZE, mWidth - x),
                         Math.min(CONTENT_SIZE, mHeight - y));
                 list.add(tile);
             }
@@ -284,8 +210,7 @@ public class TiledTexture implements Texture {
 
     // Draws a mixed color of this texture and a specified color onto the
     // a rectangle. The used color is: from * (1 - ratio) + to * ratio.
-    public void drawMixed(GLCanvas canvas, int color, float ratio,
-            int x, int y, int width, int height) {
+    public void drawMixed(GLCanvas canvas, int color, float ratio, int x, int y, int width, int height) {
         RectF src = mSrcRect;
         RectF dest = mDestRect;
         float scaleX = (float) width / mWidth;
@@ -347,6 +272,11 @@ public class TiledTexture implements Texture {
     }
 
     @Override
+    public void draw(GLCanvas canvas, int x, int y) {
+        draw(canvas, x, y, mWidth, mHeight);
+    }
+
+    @Override
     public int getWidth() {
         return mWidth;
     }
@@ -354,11 +284,6 @@ public class TiledTexture implements Texture {
     @Override
     public int getHeight() {
         return mHeight;
-    }
-
-    @Override
-    public void draw(GLCanvas canvas, int x, int y) {
-        draw(canvas, x, y, mWidth, mHeight);
     }
 
     @Override
