@@ -256,6 +256,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
 
     private void initializeViews() {
         mSlotView = new SlotView(mContext);
+        //mSlotView.setBackgroundColor(UtilsCom.intColorToFloatARGBArray(mContext.getAndroidContext().getResources().getColor(getBackgroundColorId())));
         mSlotView.setSlotLayout(new NormalLayout(mContext.getAndroidContext()));
         mRender = new SlotViewRender(mContext, mSlotView, mSelector);
         mSlotView.setSlotRenderer(mRender);

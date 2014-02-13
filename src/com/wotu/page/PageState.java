@@ -1,7 +1,8 @@
-
 package com.wotu.page;
 
+import com.wotu.R;
 import com.wotu.activity.WoTuContext;
+import com.wotu.utils.UtilsCom;
 import com.wotu.view.GLView;
 
 import android.app.ActionBar;
@@ -43,6 +44,8 @@ abstract public class PageState {
         public Intent resultData;
     }
 
+    protected float[] mBackgroundColor;
+
     private boolean mDestroyed = false;
     private boolean mPlugged = false;
     boolean mIsFinishing = false;
@@ -83,7 +86,16 @@ abstract public class PageState {
     protected void onPageResult(int requestCode, int resultCode, Intent data) {
     }
 
+    protected int getBackgroundColorId() {
+        return R.color.default_background;
+    }
+
+    protected float[] getBackgroundColor() {
+        return mBackgroundColor;
+    }
+
     protected void onCreate(Bundle data, Bundle storedPage) {
+        mBackgroundColor = UtilsCom.intColorToFloatARGBArray(mContext.getAndroidContext().getResources().getColor(getBackgroundColorId()));
     }
 
     BroadcastReceiver mPowerIntentReceiver = new BroadcastReceiver() {

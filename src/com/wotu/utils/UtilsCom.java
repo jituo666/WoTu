@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.Environment;
@@ -287,4 +288,12 @@ public class UtilsCom {
         return durationValue;
     }
     
+    public static float[] intColorToFloatARGBArray(int from) {
+        return new float[] {
+            Color.alpha(from) / 255f,
+            Color.red(from) / 255f,
+            Color.green(from) / 255f,
+            Color.blue(from) / 255f
+        };
+    }
 }
