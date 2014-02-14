@@ -112,7 +112,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     public void onDrawFrame(GL10 gl) {
         WLog.i(TAG, "onDrawFrame ");
         AnimTimer.update();
-        //gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         mRenderLock.lock();
         while (mFreeze) {
             mFreezeCondition.awaitUninterruptibly();

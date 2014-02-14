@@ -24,7 +24,7 @@ public class GLView {
     private static final int FLAG_SET_MEASURED_SIZE = 2;
     private static final int FLAG_LAYOUT_REQUESTED = 4;
 
-    private GLController mRoot;
+    private GLController mGLController;
     protected GLView mParent;
     private GLView mMotionTarget;
     private ArrayList<GLView> mChilds;
@@ -64,9 +64,9 @@ public class GLView {
         mBackgroundColor = color;
     }
 
-    protected void renderBackground(GLCanvas view) {
+    protected void renderBackground(GLCanvas canvas) {
         if (mBackgroundColor != null) {
-            view.clearBuffer(mBackgroundColor);
+            canvas.clearBuffer(mBackgroundColor);
         }
     }
 
@@ -97,7 +97,7 @@ public class GLView {
     }
 
     public GLController getGLController() {
-        return mRoot;
+        return mGLController;
     }
 
     // Request re-rendering of the view hierarchy.
@@ -313,28 +313,28 @@ public class GLView {
 
     // This should only be called on the content pane (the topmost GLView).
     public void attachToRoot(GLController glController) {
-        UtilsBase.assertTrue(mParent == null && mRoot == null); //必须是根GLview才可以从外部调用attach
+        UtilsBase.assertTrue(mParent == null && mGLController == null); //必须是根GLview才可以从外部调用attach
         onAttachToRoot(glController);
     }
 
     // This should only be called on the content pane (the topmost GLView).
-    public void detachFromRoot() {
-        UtilsBase.assertTrue(mParent == null && mRoot != null); //必须是根GLview才可以从外部调用detach
-        onDetachFromRoot();
+    public void detachFromGLController() {
+        UtilsBase.assertTrue(mParent == null && mGLController != null); //必须是根GLview才可以从外部调用detach
+        onDetachFromGLController();
     }
 
     protected void onAttachToRoot(GLController glController) {
-        mRoot = glController;
+        mGLController = glController;
         for (int i = 0, n = getChildCount(); i < n; ++i) {
             getChild(i).onAttachToRoot(glController); //子GLview的attach办法
         }
     }
 
-    protected void onDetachFromRoot() {
+    protected void onDetachFromGLController() {
         for (int i = 0, n = getChildCount(); i < n; ++i) {
-            getChild(i).onDetachFromRoot(); ////子GLview的detach办法
+            getChild(i).onDetachFromGLController(); ////子GLview的detach办法
         }
-        mRoot = null;
+        mGLController = null;
     }
 
     //----------------------------component operations-----------------------------
@@ -365,8 +365,8 @@ public class GLView {
         component.mParent = this;
 
         // If this is added after we have a glController, tell the component.
-        if (mRoot != null) {
-            component.onAttachToRoot(mRoot);
+        if (mGLController != null) {
+            component.onAttachToRoot(mGLController);
         }
     }
 
@@ -397,21 +397,21 @@ public class GLView {
             dispatchTouchEvent(cancelEvent);
             cancelEvent.recycle();
         }
-        component.onDetachFromRoot();
+        component.onDetachFromGLController();
         component.mParent = null;
     }
 
     //----------------------------end component operations-----------------------------
 
     public void lockRendering() {
-        if (mRoot != null) {
-            mRoot.lockRenderThread();
+        if (mGLController != null) {
+            mGLController.lockRenderThread();
         }
     }
 
     public void unlockRendering() {
-        if (mRoot != null) {
-            mRoot.unlockRenderThread();
+        if (mGLController != null) {
+            mGLController.unlockRenderThread();
         }
     }
 

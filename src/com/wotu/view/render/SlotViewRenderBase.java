@@ -97,8 +97,7 @@ public abstract class SlotViewRenderBase implements SlotView.SlotRenderer {
     }
 
     protected static void drawFrame(GLCanvas canvas, Rect padding, Texture frame,
-            int x, int y, int width, int height) {
-        frame.draw(canvas, x - padding.left, y - padding.top, width + padding.left + padding.right,
+            int x, int y, int width, int height) {frame.draw(canvas, x - padding.left, y - padding.top, width + padding.left + padding.right,
                  height + padding.top + padding.bottom);
     }
 }
