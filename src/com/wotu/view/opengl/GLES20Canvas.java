@@ -8,15 +8,12 @@ import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
-
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.microedition.khronos.opengles.GL11;
 
 import com.wotu.utils.IntArray;
 
@@ -994,5 +991,4 @@ public class GLES20Canvas implements GLCanvas {
     public GLId getGLId() {
         return mGLId;
     }
-
 }

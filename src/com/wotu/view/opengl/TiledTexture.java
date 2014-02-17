@@ -148,8 +148,7 @@ public class TiledTexture implements Texture {
                 tile.offsetX = x;
                 tile.offsetY = y;
                 tile.bitmap = bitmap;
-                tile.setSize(Math.min(CONTENT_SIZE, mWidth - x),
-                        Math.min(CONTENT_SIZE, mHeight - y));
+                tile.setSize(Math.min(CONTENT_SIZE, mWidth - x), Math.min(CONTENT_SIZE, mHeight - y));
                 list.add(tile);
             }
         }

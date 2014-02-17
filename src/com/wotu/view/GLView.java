@@ -318,7 +318,7 @@ public class GLView {
     }
 
     // This should only be called on the content pane (the topmost GLView).
-    public void detachFromGLController() {
+    public void detachFromRoot() {
         UtilsBase.assertTrue(mParent == null && mGLController != null); //必须是根GLview才可以从外部调用detach
         onDetachFromGLController();
     }

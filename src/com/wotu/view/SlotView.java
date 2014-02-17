@@ -258,7 +258,7 @@ public class SlotView extends GLView {
         if (mAnimation != null && mAnimation.isActive()) {
             mAnimation.apply(canvas, index, rect);
         }
-        WLog.i(TAG, " position-x:" + rect.left + " position-y:" + rect.top);
+        //WLog.i(TAG, " x:" + rect.left + " y:" + rect.top);
         int result = mRenderer.renderSlot(canvas, index, pass, rect.right - rect.left, rect.bottom - rect.top);
         canvas.restore();
         return result;
@@ -317,8 +317,7 @@ public class SlotView extends GLView {
         for (int pass = 1; requestCount != 0; ++pass) {
             int newCount = 0;
             for (int i = 0; i < requestCount; ++i) {
-                int r = renderItem(canvas,
-                        requestedSlot[i], pass, paperActive);
+                int r = renderItem(canvas, requestedSlot[i], pass, paperActive);
                 if ((r & RENDER_MORE_FRAME) != 0)
                     more = true;
                 if ((r & RENDER_MORE_PASS) != 0)

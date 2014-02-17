@@ -1,6 +1,7 @@
 package com.wotu.view.render;
 
 import com.wotu.R;
+import com.wotu.common.WLog;
 import com.wotu.view.opengl.FadeOutTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.NinePatchTexture;
@@ -13,6 +14,8 @@ import android.graphics.Rect;
 
 public abstract class SlotViewRenderBase implements SlotView.SlotRenderer {
 
+    private static final String TAG = "SlotViewRender";
+    
     private final ResourceTexture mVideoOverlay;
     private final ResourceTexture mVideoPlayIcon;
     private final ResourceTexture mPanoramaIcon;
@@ -42,10 +45,9 @@ public abstract class SlotViewRenderBase implements SlotView.SlotRenderer {
         }
 
         // Fit the content into the box
-        float scale = Math.min(
-                (float) width / content.getWidth(),
-                (float) height / content.getHeight());
+        float scale = Math.min((float) width / content.getWidth(), (float) height / content.getHeight());
         canvas.scale(scale, scale, 1);
+        //WLog.i(TAG, "drawContent content == null?" + (content == null) + "widht:" + width + "height :" + height);
         content.draw(canvas, 0, 0);
 
         canvas.restore();
@@ -66,8 +68,7 @@ public abstract class SlotViewRenderBase implements SlotView.SlotRenderer {
 
     protected void drawPanoramaIcon(GLCanvas canvas, int width, int height) {
         int iconSize = Math.min(width, height) / 6;
-        mPanoramaIcon.draw(canvas, (width - iconSize) / 2, (height - iconSize) / 2,
-                iconSize, iconSize);
+        mPanoramaIcon.draw(canvas, (width - iconSize) / 2, (height - iconSize) / 2, iconSize, iconSize);
     }
 
     protected boolean isPressedUpFrameFinished() {

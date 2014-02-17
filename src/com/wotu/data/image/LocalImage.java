@@ -138,7 +138,7 @@ public class LocalImage extends LocalMediaItem {
 
     @Override
     public Job<Bitmap> requestImage(int type) {
-        WLog.i(TAG, "requestImage filePath:" + filePath);
+        //WLog.i(TAG, "requestImage filePath:" + filePath);
         return new LocalImageRequest(mApplication, mPath, type, filePath);
     }
 

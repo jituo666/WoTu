@@ -16,13 +16,14 @@ import com.wotu.R;
 import com.wotu.activity.OrientationSource;
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.CanvasAnim;
+import com.wotu.common.ApiHelper;
 import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.BasicTexture;
 import com.wotu.view.opengl.GLCanvas;
 import com.wotu.view.opengl.GLES11Canvas;
+import com.wotu.view.opengl.GLES20Canvas;
 import com.wotu.view.opengl.UploadedTexture;
-import com.wotu.view.opengl.WoTuEGLCfgChooser;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -34,13 +35,20 @@ import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
+//The root component of all <code>GLView</code>s. The rendering is done in GL
+//thread while the event handling is done in the main thread.  To synchronize
+//the two threads, the entry points of this package need to synchronize on the
+//<code>GLRootView</code> instance unless it can be proved that the rendering
+//thread won't access the same thing as the method. The entry points include:
+//(1) The public methods of HeadUpDisplay
+//(2) The public methods of CameraHeadUpDisplay
+//(3) The overridden methods in GLRootView.
 public class GLRootView extends GLSurfaceView implements Renderer, GLController {
 
     private static final String TAG = "GLRootView";
 
     private static final int FLAG_INITIALIZED = 1;
     private static final int FLAG_NEED_LAYOUT = 2;
-    private final WoTuEGLCfgChooser mEglConfigChooser = new WoTuEGLCfgChooser();
     private GL11 mGL;
     private final ReentrantLock mRenderLock = new ReentrantLock();
     private final Condition mFreezeCondition = mRenderLock.newCondition();
@@ -72,9 +80,19 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     public GLRootView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mFlags |= FLAG_INITIALIZED;
-        setEGLConfigChooser(mEglConfigChooser);
+        //setEGLConfigChooser(mEglConfigChooser);
+        setEGLContextClientVersion(ApiHelper.HAS_GLES20_REQUIRED ? 2 : 1);
+        if (ApiHelper.USE_888_PIXEL_FORMAT) {
+            setEGLConfigChooser(8, 8, 8, 0, 0, 0);
+        } else {
+            setEGLConfigChooser(5, 6, 5, 0, 0, 0);
+        }
         setRenderer(this);
-        getHolder().setFormat(PixelFormat.RGB_565);
+        if (ApiHelper.USE_888_PIXEL_FORMAT) {
+            getHolder().setFormat(PixelFormat.RGB_888);
+        } else {
+            getHolder().setFormat(PixelFormat.RGB_565);
+        }
 
     }
 
@@ -88,7 +106,7 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         mRenderLock.lock();
         try {
             mGL = gl;
-            mCanvas = new GLES11Canvas(mGL);
+            mCanvas = ApiHelper.HAS_GLES20_REQUIRED ? new GLES20Canvas() : new GLES11Canvas(gl);
             BasicTexture.invalidateAllTextures();
         } finally {
             mRenderLock.unlock();
