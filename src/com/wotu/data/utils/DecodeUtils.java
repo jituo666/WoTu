@@ -1,24 +1,27 @@
 package com.wotu.data.utils;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
 import android.graphics.BitmapRegionDecoder;
+import android.os.Build;
 import android.util.FloatMath;
 
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.InputStream;
+
+import com.wotu.common.ApiHelper;
 import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
 import com.wotu.common.WLog;
 import com.wotu.data.MediaItem;
 import com.wotu.utils.UtilsBase;
 
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.InputStream;
-
 public class DecodeUtils {
-    private static final String TAG = "DecodeService";
+    private static final String TAG = "DecodeUtils";
 
     private static class DecodeCanceller implements CancelListener {
         Options mOptions;
@@ -33,9 +36,15 @@ public class DecodeUtils {
         }
     }
 
+    @TargetApi(ApiHelper.VERSION_CODES.HONEYCOMB)
+    public static void setOptionsMutable(Options options) {
+        if (ApiHelper.HAS_OPTIONS_IN_MUTABLE) options.inMutable = true;
+    }
+
     public static Bitmap decode(JobContext jc, FileDescriptor fd, Options options) {
         if (options == null) options = new Options();
         jc.setCancelListener(new DecodeCanceller(options));
+        setOptionsMutable(options);
         return ensureGLCompatibleBitmap(
                 BitmapFactory.decodeFileDescriptor(fd, null, options));
     }
@@ -57,6 +66,7 @@ public class DecodeUtils {
             int length, Options options) {
         if (options == null) options = new Options();
         jc.setCancelListener(new DecodeCanceller(options));
+        setOptionsMutable(options);
         return ensureGLCompatibleBitmap(
                 BitmapFactory.decodeByteArray(bytes, offset, length, options));
     }
@@ -117,6 +127,7 @@ public class DecodeUtils {
         }
 
         options.inJustDecodeBounds = false;
+        setOptionsMutable(options);
 
         Bitmap result = BitmapFactory.decodeFileDescriptor(fd, null, options);
         if (result == null) return null;
@@ -152,6 +163,8 @@ public class DecodeUtils {
         options.inSampleSize = BitmapUtils.computeSampleSizeLarger(
                 options.outWidth, options.outHeight, targetSize);
         options.inJustDecodeBounds = false;
+        setOptionsMutable(options);
+
         return ensureGLCompatibleBitmap(
                 BitmapFactory.decodeByteArray(data, 0, data.length, options));
     }
@@ -160,7 +173,6 @@ public class DecodeUtils {
     // DecodeUtils.requestDecode(...), since we don't have the knowledge
     // if the bitmap will be uploaded to GL.
     public static Bitmap ensureGLCompatibleBitmap(Bitmap bitmap) {
-
         if (bitmap == null || bitmap.getConfig() != null) return bitmap;
         Bitmap newBitmap = bitmap.copy(Config.ARGB_8888, false);
         bitmap.recycle();
@@ -215,5 +227,69 @@ public class DecodeUtils {
             WLog.w(TAG, "requestCreateBitmapRegionDecoder: " + t);
             return null;
         }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static Bitmap decodeUsingPool(JobContext jc, byte[] data, int offset,
+            int length, BitmapFactory.Options options) {
+        if (options == null) options = new BitmapFactory.Options();
+        if (options.inSampleSize < 1) options.inSampleSize = 1;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        options.inBitmap = (options.inSampleSize == 1)
+                ? findCachedBitmap(jc, data, offset, length, options) : null;
+        try {
+            Bitmap bitmap = decode(jc, data, offset, length, options);
+            if (options.inBitmap != null && options.inBitmap != bitmap) {
+                WoTuBitmapPool.getInstance().put(options.inBitmap);
+                options.inBitmap = null;
+            }
+            return bitmap;
+        } catch (IllegalArgumentException e) {
+            if (options.inBitmap == null) throw e;
+
+            WLog.w(TAG, "decode fail with a given bitmap, try decode to a new bitmap");
+            WoTuBitmapPool.getInstance().put(options.inBitmap);
+            options.inBitmap = null;
+            return decode(jc, data, offset, length, options);
+        }
+    }
+
+    // This is the same as the method above except the source data comes
+    // from a file descriptor instead of a byte array.
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static Bitmap decodeUsingPool(JobContext jc,
+            FileDescriptor fileDescriptor, Options options) {
+        if (options == null) options = new BitmapFactory.Options();
+        if (options.inSampleSize < 1) options.inSampleSize = 1;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        options.inBitmap = (options.inSampleSize == 1)
+                ? findCachedBitmap(jc, fileDescriptor, options) : null;
+        try {
+            Bitmap bitmap = DecodeUtils.decode(jc, fileDescriptor, options);
+            if (options.inBitmap != null && options.inBitmap != bitmap) {
+                WoTuBitmapPool.getInstance().put(options.inBitmap);
+                options.inBitmap = null;
+            }
+            return bitmap;
+        } catch (IllegalArgumentException e) {
+            if (options.inBitmap == null) throw e;
+
+            WLog.w(TAG, "decode fail with a given bitmap, try decode to a new bitmap");
+            WoTuBitmapPool.getInstance().put(options.inBitmap);
+            options.inBitmap = null;
+            return decode(jc, fileDescriptor, options);
+        }
+    }
+
+    private static Bitmap findCachedBitmap(JobContext jc, byte[] data,
+            int offset, int length, Options options) {
+        decodeBounds(jc, data, offset, length, options);
+        return WoTuBitmapPool.getInstance().get(options.outWidth, options.outHeight);
+    }
+
+    private static Bitmap findCachedBitmap(JobContext jc, FileDescriptor fileDescriptor,
+            Options options) {
+        decodeBounds(jc, fileDescriptor, options);
+        return WoTuBitmapPool.getInstance().get(options.outWidth, options.outHeight);
     }
 }

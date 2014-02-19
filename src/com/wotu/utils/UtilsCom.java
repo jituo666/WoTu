@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.ConditionVariable;
@@ -22,6 +23,8 @@ import android.view.WindowManager;
 import com.wotu.R;
 import com.wotu.common.ThreadPool.CancelListener;
 import com.wotu.common.ThreadPool.JobContext;
+import com.wotu.data.MediaItem;
+import com.wotu.view.TiledScreenNail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,15 +49,25 @@ public class UtilsCom {
     private static boolean sCameraAvailable;
 
     public static void initialize(Context context) {
-        if (sPixelDensity < 0) {
-            DisplayMetrics metrics = new DisplayMetrics();
-            WindowManager wm = (WindowManager)
-                    context.getSystemService(Context.WINDOW_SERVICE);
-            wm.getDefaultDisplay().getMetrics(metrics);
-            sPixelDensity = metrics.density;
-        }
+        DisplayMetrics metrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager)
+                context.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        sPixelDensity = metrics.density;
+        Resources r = context.getResources();
+        TiledScreenNail.setPlaceholderColor(r.getColor(
+                R.color.bitmap_screennail_placeholder));
+        initializeThumbnailSizes(metrics, r);
     }
 
+    private static void initializeThumbnailSizes(DisplayMetrics metrics, Resources r) {
+        int maxPixels = Math.max(metrics.heightPixels, metrics.widthPixels);
+
+        // For screen-nails, we never need to completely fill the screen
+        MediaItem.setThumbnailSizes(maxPixels / 2, maxPixels / 5);
+        TiledScreenNail.setMaxSide(maxPixels / 2);
+    }
+    
     public static float dpToPixel(float dp) {
         return sPixelDensity * dp;
     }

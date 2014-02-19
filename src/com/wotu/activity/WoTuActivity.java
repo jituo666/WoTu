@@ -5,6 +5,7 @@ import com.wotu.app.WoTuApp;
 import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
 import com.wotu.data.MediaItem;
+import com.wotu.data.utils.WoTuBitmapPool;
 import com.wotu.page.PageManager;
 import com.wotu.view.GLController;
 import com.wotu.view.GLRootView;
@@ -93,8 +94,7 @@ public abstract class WoTuActivity extends Activity implements WoTuContext {
         } finally {
             mGLRootView.unlockRenderThread();
         }
-        MediaItem.getMicroThumbPool().clear();
-        MediaItem.getThumbPool().clear();
+        WoTuBitmapPool.getInstance().clear();
         MediaItem.getBytesBufferPool().clear();
     }
 

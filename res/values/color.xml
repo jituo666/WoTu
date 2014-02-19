@@ -2,5 +2,5 @@
 <resources>
 
     <color name="default_background">#ffff0000</color>
-
+<color name="bitmap_screennail_placeholder">#333</color>
 </resources>

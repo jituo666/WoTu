@@ -15,6 +15,7 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.wotu.common.WLog;
 import com.wotu.utils.IntArray;
 
 public class GLES20Canvas implements GLCanvas {
@@ -568,6 +569,7 @@ public class GLES20Canvas implements GLCanvas {
         if (width <= 0 || height <= 0) {
             return;
         }
+        //WLog.i(TAG, "drawTextureRect x:" + x + " y:" + y + " width:" + width + " height:" + height);
         copyTextureCoordinates(texture, mTempSourceRect);
         mTempTargetRect.set(x, y, x + width, y + height);
         convertCoordinate(mTempSourceRect, mTempTargetRect, texture);
@@ -650,6 +652,7 @@ public class GLES20Canvas implements GLCanvas {
     }
 
     private void drawTextureRect(BasicTexture texture, float[] textureMatrix, RectF target) {
+
         ShaderParameter[] params = prepareTexture(texture);
         setPosition(params, OFFSET_FILL_RECT);
         GLES20.glUniformMatrix4fv(params[INDEX_TEXTURE_MATRIX].handle, 1, false, textureMatrix, 0);

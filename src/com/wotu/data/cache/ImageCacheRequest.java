@@ -4,54 +4,61 @@ import com.wotu.app.WoTuApp;
 import com.wotu.common.BytesBufferPool.BytesBuffer;
 import com.wotu.common.ThreadPool.Job;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.common.WLog;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
 import com.wotu.data.utils.BitmapUtils;
+import com.wotu.data.utils.DecodeUtils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
-public abstract class ImageRequest implements Job<Bitmap> {
+
+public abstract class ImageCacheRequest implements Job<Bitmap> {
     private static final String TAG = "ImageCacheRequest";
 
     protected WoTuApp mApplication;
     private Path mPath;
     private int mType;
     private int mTargetSize;
+    private long mTimeModified;
 
-    public ImageRequest(WoTuApp application,
-            Path path, int type, int targetSize) {
+    public ImageCacheRequest(WoTuApp application,
+            Path path, long timeModified, int type, int targetSize) {
         mApplication = application;
         mPath = path;
         mType = type;
         mTargetSize = targetSize;
+        mTimeModified = timeModified;
+    }
+
+    private String debugTag() {
+        return mPath + "," + mTimeModified + "," +
+                ((mType == MediaItem.TYPE_THUMBNAIL) ? "THUMB" :
+                (mType == MediaItem.TYPE_MICROTHUMBNAIL) ? "MICROTHUMB" : "?");
     }
 
     @Override
     public Bitmap run(JobContext jc) {
-        String debugTag = mPath + "," +
-                 ((mType == MediaItem.TYPE_THUMBNAIL) ? "THUMB" :
-                 (mType == MediaItem.TYPE_MICROTHUMBNAIL) ? "MICROTHUMB" : "?");
-        ImageCacher cacheService = mApplication.getImageCacheService();
+        ImageCacheService cacheService = mApplication.getImageCacheService();
 
         BytesBuffer buffer = MediaItem.getBytesBufferPool().get();
         try {
-            boolean found = cacheService.getImageData(mPath, mType, buffer);
+            boolean found = cacheService.getImageData(mPath, mTimeModified, mType, buffer);
             if (jc.isCancelled()) return null;
             if (found) {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmap;
                 if (mType == MediaItem.TYPE_MICROTHUMBNAIL) {
-                    bitmap = MediaItem.getMicroThumbPool().decode(jc,
+                    bitmap = DecodeUtils.decodeUsingPool(jc,
                             buffer.data, buffer.offset, buffer.length, options);
                 } else {
-                    bitmap = MediaItem.getThumbPool().decode(jc,
+                    bitmap = DecodeUtils.decodeUsingPool(jc,
                             buffer.data, buffer.offset, buffer.length, options);
                 }
                 if (bitmap == null && !jc.isCancelled()) {
-                    WLog.w(TAG, "decode cached failed " + debugTag);
+                    Log.w(TAG, "decode cached failed " + debugTag());
                 }
                 return bitmap;
             }
@@ -62,7 +69,7 @@ public abstract class ImageRequest implements Job<Bitmap> {
         if (jc.isCancelled()) return null;
 
         if (bitmap == null) {
-            WLog.w(TAG, "decode orig failed " + debugTag);
+            Log.w(TAG, "decode orig failed " + debugTag());
             return null;
         }
 
@@ -76,7 +83,7 @@ public abstract class ImageRequest implements Job<Bitmap> {
         byte[] array = BitmapUtils.compressToBytes(bitmap);
         if (jc.isCancelled()) return null;
 
-        cacheService.putImageData(mPath, mType, array);
+        cacheService.putImageData(mPath, mTimeModified, mType, array);
         return bitmap;
     }
 

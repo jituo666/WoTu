@@ -2,34 +2,35 @@ package com.wotu.data.cache;
 
 import android.content.Context;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import com.wotu.common.BytesBufferPool.BytesBuffer;
 import com.wotu.data.Path;
 import com.wotu.data.cache.BlobCache.LookupRequest;
 import com.wotu.utils.UtilsBase;
 import com.wotu.utils.UtilsCom;
 
-public class ImageCacher {
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+public class ImageCacheService {
     @SuppressWarnings("unused")
     private static final String TAG = "ImageCacheService";
 
     private static final String IMAGE_CACHE_FILE = "imgcache";
     private static final int IMAGE_CACHE_MAX_ENTRIES = 5000;
     private static final int IMAGE_CACHE_MAX_BYTES = 200 * 1024 * 1024;
-    private static final int IMAGE_CACHE_VERSION = 4;
+    private static final int IMAGE_CACHE_VERSION = 7;
 
     private BlobCache mCache;
 
-    public ImageCacher(Context context) {
+    public ImageCacheService(Context context) {
         mCache = CacheManager.getCache(context, IMAGE_CACHE_FILE,
                 IMAGE_CACHE_MAX_ENTRIES, IMAGE_CACHE_MAX_BYTES,
                 IMAGE_CACHE_VERSION);
     }
 
     /**
-     * Gets the cached image data for the given <code>path</code> and <code>type</code>.
+     * Gets the cached image data for the given <code>path</code>,
+     *  <code>timeModified</code> and <code>type</code>.
      *
      * The image data will be stored in <code>buffer.data</code>, started from
      * <code>buffer.offset</code> for <code>buffer.length</code> bytes. If the
@@ -37,8 +38,8 @@ public class ImageCacher {
      *
      * @return true if the image data is found; false if not found.
      */
-    public boolean getImageData(Path path, int type, BytesBuffer buffer) {
-        byte[] key = makeKey(path, type);
+    public boolean getImageData(Path path, long timeModified, int type, BytesBuffer buffer) {
+        byte[] key = makeKey(path, timeModified, type);
         long cacheKey = UtilsBase.crc64Long(key);
         try {
             LookupRequest request = new LookupRequest();
@@ -59,8 +60,8 @@ public class ImageCacher {
         return false;
     }
 
-    public void putImageData(Path path, int type, byte[] value) {
-        byte[] key = makeKey(path, type);
+    public void putImageData(Path path, long timeModified, int type, byte[] value) {
+        byte[] key = makeKey(path, timeModified, type);
         long cacheKey = UtilsBase.crc64Long(key);
         ByteBuffer buffer = ByteBuffer.allocate(key.length + value.length);
         buffer.put(key);
@@ -74,8 +75,20 @@ public class ImageCacher {
         }
     }
 
-    private static byte[] makeKey(Path path, int type) {
-        return UtilsCom.getBytes(path.toString() + "+" + type);
+    public void clearImageData(Path path, long timeModified, int type) {
+        byte[] key = makeKey(path, timeModified, type);
+        long cacheKey = UtilsBase.crc64Long(key);
+        synchronized (mCache) {
+            try {
+                mCache.clearEntry(cacheKey);
+            } catch (IOException ex) {
+                // ignore.
+            }
+        }
+    }
+
+    private static byte[] makeKey(Path path, long timeModified, int type) {
+        return UtilsCom.getBytes(path.toString() + "+" + timeModified + "+" + type);
     }
 
     private static boolean isSameKey(byte[] key, byte[] buffer) {

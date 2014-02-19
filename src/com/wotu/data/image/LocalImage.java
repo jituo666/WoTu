@@ -1,36 +1,43 @@
 package com.wotu.data.image;
 
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
-import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.ImageColumns;
+import android.provider.MediaStore.MediaColumns;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import com.wotu.app.WoTuApp;
+import com.wotu.common.ApiHelper;
 import com.wotu.common.ThreadPool.Job;
 import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.common.WLog;
 import com.wotu.data.MediaDetails;
 import com.wotu.data.MediaItem;
 import com.wotu.data.Path;
-import com.wotu.data.cache.ImageRequest;
+import com.wotu.data.cache.ImageCacheRequest;
+import com.wotu.data.exif.ExifInterface;
+import com.wotu.data.exif.ExifTag;
 import com.wotu.data.source.LocalAlbum;
 import com.wotu.data.utils.BitmapUtils;
 import com.wotu.data.utils.DecodeUtils;
 import com.wotu.utils.UpdateHelper;
 import com.wotu.utils.UtilsCom;
 
-import java.io.File;
-import java.io.IOException;
-
 // LocalImage represents an image in the local storage.
 public class LocalImage extends LocalMediaItem {
     private static final String TAG = "LocalImage";
+    public static final String ITEM_PATH = "/local/image/item";
     // Must preserve order between these indices and the order of the terms in
     // the following PROJECTION array.
     private static final int INDEX_ID = 0;
@@ -48,9 +55,7 @@ public class LocalImage extends LocalMediaItem {
     private static final int INDEX_WIDTH = 12;
     private static final int INDEX_HEIGHT = 13;
 
-    public static final String ITEM_PATH = "/local/image/item";
-
-    public static final String[] PROJECTION = {
+    public static final String[] PROJECTION =  {
             ImageColumns._ID,           // 0
             ImageColumns.TITLE,         // 1
             ImageColumns.MIME_TYPE,     // 2
@@ -63,10 +68,21 @@ public class LocalImage extends LocalMediaItem {
             ImageColumns.ORIENTATION,   // 9
             ImageColumns.BUCKET_ID,     // 10
             ImageColumns.SIZE,          // 11
-            ImageColumns.WIDTH,         // 12
-            ImageColumns.HEIGHT
-    // 13
+            "0",                        // 12
+            "0"                         // 13
     };
+
+    static {
+        updateWidthAndHeightProjection();
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private static void updateWidthAndHeightProjection() {
+        if (ApiHelper.HAS_MEDIA_COLUMNS_WIDTH_AND_HEIGHT) {
+            PROJECTION[INDEX_WIDTH] = MediaColumns.WIDTH;
+            PROJECTION[INDEX_HEIGHT] = MediaColumns.HEIGHT;
+        }
+    }
 
     private final WoTuApp mApplication;
 
@@ -105,6 +121,8 @@ public class LocalImage extends LocalMediaItem {
         latitude = cursor.getDouble(INDEX_LATITUDE);
         longitude = cursor.getDouble(INDEX_LONGITUDE);
         dateTakenInMs = cursor.getLong(INDEX_DATE_TAKEN);
+        dateAddedInSec = cursor.getLong(INDEX_DATE_ADDED);
+        dateModifiedInSec = cursor.getLong(INDEX_DATE_MODIFIED);
         filePath = cursor.getString(INDEX_DATA);
         rotation = cursor.getInt(INDEX_ORIENTATION);
         bucketId = cursor.getInt(INDEX_BUCKET_ID);
@@ -138,16 +156,18 @@ public class LocalImage extends LocalMediaItem {
 
     @Override
     public Job<Bitmap> requestImage(int type) {
-        //WLog.i(TAG, "requestImage filePath:" + filePath);
-        return new LocalImageRequest(mApplication, mPath, type, filePath);
+        return new LocalImageRequest(mApplication, mPath, dateModifiedInSec,
+                type, filePath);
     }
 
-    public static class LocalImageRequest extends ImageRequest {
+    public static class LocalImageRequest extends ImageCacheRequest {
         private String mLocalFilePath;
 
-        LocalImageRequest(WoTuApp application, Path path, int type,
-                String localFilePath) {
-            super(application, path, type, MediaItem.getTargetSize(type));
+        LocalImageRequest(WoTuApp application, Path path, long timeModified,
+                int type, String localFilePath) {
+            super(application, path, timeModified, type,
+                    MediaItem.getTargetSize(type));
+            Log.i(TAG, "11mTargetSize" + MediaItem.getTargetSize(type) );
             mLocalFilePath = localFilePath;
         }
 
@@ -159,25 +179,26 @@ public class LocalImage extends LocalMediaItem {
 
             // try to decode from JPEG EXIF
             if (type == MediaItem.TYPE_MICROTHUMBNAIL) {
-                ExifInterface exif = null;
+                ExifInterface exif = new ExifInterface();
                 byte[] thumbData = null;
                 try {
-                    exif = new ExifInterface(mLocalFilePath);
-                    if (exif != null) {
-                        thumbData = exif.getThumbnail();
-                    }
-                } catch (Throwable t) {
-                    WLog.w(TAG, "fail to get exif thumb", t);
+                    exif.readExif(mLocalFilePath);
+                    thumbData = exif.getThumbnail();
+                } catch (FileNotFoundException e) {
+                    Log.w(TAG, "failed to find file to read thumbnail: " + mLocalFilePath);
+                } catch (IOException e) {
+                    Log.w(TAG, "failed to get thumbnail from: " + mLocalFilePath);
                 }
                 if (thumbData != null) {
                     Bitmap bitmap = DecodeUtils.decodeIfBigEnough(
                             jc, thumbData, options, targetSize);
-                    if (bitmap != null)
-                        return bitmap;
+                    if (bitmap != null) return bitmap;
                 }
             }
 
-            return DecodeUtils.decodeThumbnail(jc, mLocalFilePath, options, targetSize, type);
+            Bitmap b = DecodeUtils.decodeThumbnail(jc, mLocalFilePath, options, targetSize, type);
+            Log.i(TAG, "onDecodeOriginal mLocalFilePath:" + mLocalFilePath + " b w:" + b.getWidth() + " h:" + b.getHeight());
+            return b;
         }
     }
 
@@ -186,26 +207,25 @@ public class LocalImage extends LocalMediaItem {
         return new LocalLargeImageRequest(filePath);
     }
 
-    public static class LocalLargeImageRequest
-            implements Job<BitmapRegionDecoder> {
+    public static class LocalLargeImageRequest implements Job<BitmapRegionDecoder> {
         String mLocalFilePath;
 
         public LocalLargeImageRequest(String localFilePath) {
             mLocalFilePath = localFilePath;
         }
 
+        @Override
         public BitmapRegionDecoder run(JobContext jc) {
-            BitmapRegionDecoder b = DecodeUtils.createBitmapRegionDecoder(jc, mLocalFilePath, false);
-            return b;
+            return DecodeUtils.createBitmapRegionDecoder(jc, mLocalFilePath, false);
         }
     }
 
     @Override
     public int getSupportedOperations() {
         int operation = SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_CROP
-                | SUPPORT_SETAS | SUPPORT_EDIT | SUPPORT_INFO;
+                | SUPPORT_SETAS | SUPPORT_INFO;
         if (BitmapUtils.isSupportedByRegionDecoder(mimeType)) {
-            operation |= SUPPORT_FULL_IMAGE;
+            operation |= SUPPORT_FULL_IMAGE | SUPPORT_EDIT;
         }
 
         if (BitmapUtils.isRotationSupported(mimeType)) {
@@ -222,26 +242,10 @@ public class LocalImage extends LocalMediaItem {
     public void delete() {
         UtilsCom.assertNotInRenderThread();
         Uri baseUri = Images.Media.EXTERNAL_CONTENT_URI;
-        mApplication.getContentResolver().delete(baseUri, "_id=?",
-                new String[] {
-                    String.valueOf(id)
-                });
-        mApplication.getDataManager().broadcastLocalDeletion();
-    }
-
-    private static String getExifOrientation(int orientation) {
-        switch (orientation) {
-            case 0:
-                return String.valueOf(ExifInterface.ORIENTATION_NORMAL);
-            case 90:
-                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_90);
-            case 180:
-                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_180);
-            case 270:
-                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_270);
-            default:
-                throw new AssertionError("invalid: " + orientation);
-        }
+        ContentResolver contentResolver = mApplication.getContentResolver();
+        //SaveImage.deleteAuxFiles(contentResolver, getContentUri());
+        contentResolver.delete(baseUri, "_id=?",
+                new String[]{String.valueOf(id)});
     }
 
     @Override
@@ -250,29 +254,31 @@ public class LocalImage extends LocalMediaItem {
         Uri baseUri = Images.Media.EXTERNAL_CONTENT_URI;
         ContentValues values = new ContentValues();
         int rotation = (this.rotation + degrees) % 360;
-        if (rotation < 0)
-            rotation += 360;
+        if (rotation < 0) rotation += 360;
 
         if (mimeType.equalsIgnoreCase("image/jpeg")) {
-            try {
-                ExifInterface exif = new ExifInterface(filePath);
-                exif.setAttribute(ExifInterface.TAG_ORIENTATION,
-                        getExifOrientation(rotation));
-                exif.saveAttributes();
-            } catch (IOException e) {
-                WLog.w(TAG, "cannot set exif data: " + filePath);
+            ExifInterface exifInterface = new ExifInterface();
+            ExifTag tag = exifInterface.buildTag(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.getOrientationValueForRotation(rotation));
+            if(tag != null) {
+                exifInterface.setTag(tag);
+                try {
+                    exifInterface.forceRewriteExif(filePath);
+                    fileSize = new File(filePath).length();
+                    values.put(Images.Media.SIZE, fileSize);
+                } catch (FileNotFoundException e) {
+                    Log.w(TAG, "cannot find file to set exif: " + filePath);
+                } catch (IOException e) {
+                    Log.w(TAG, "cannot set exif data: " + filePath);
+                }
+            } else {
+                Log.w(TAG, "Could not build tag: " + ExifInterface.TAG_ORIENTATION);
             }
-
-            // We need to update the filesize as well
-            fileSize = new File(filePath).length();
-            values.put(Images.Media.SIZE, fileSize);
         }
 
         values.put(Images.Media.ORIENTATION, rotation);
         mApplication.getContentResolver().update(baseUri, values, "_id=?",
-                new String[] {
-                    String.valueOf(id)
-                });
+                new String[]{String.valueOf(id)});
     }
 
     @Override
@@ -290,7 +296,11 @@ public class LocalImage extends LocalMediaItem {
     public MediaDetails getDetails() {
         MediaDetails details = super.getDetails();
         details.addDetail(MediaDetails.INDEX_ORIENTATION, Integer.valueOf(rotation));
-        MediaDetails.extractExifInfo(details, filePath);
+        if (MIME_TYPE_JPEG.equals(mimeType)) {
+            // ExifInterface returns incorrect values for photos in other format.
+            // For example, the width and height of an webp images is always '0'.
+            MediaDetails.extractExifInfo(details, filePath);
+        }
         return details;
     }
 
@@ -307,5 +317,10 @@ public class LocalImage extends LocalMediaItem {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public String getFilePath() {
+        return filePath;
     }
 }

@@ -1,5 +1,18 @@
-
 package com.wotu.data.video;
+
+import com.wotu.app.WoTuApp;
+import com.wotu.common.ThreadPool.Job;
+import com.wotu.common.ThreadPool.JobContext;
+import com.wotu.common.WLog;
+import com.wotu.data.MediaDetails;
+import com.wotu.data.MediaItem;
+import com.wotu.data.Path;
+import com.wotu.data.cache.ImageCacheRequest;
+import com.wotu.data.image.LocalMediaItem;
+import com.wotu.data.source.LocalAlbum;
+import com.wotu.data.utils.BitmapUtils;
+import com.wotu.utils.UpdateHelper;
+import com.wotu.utils.UtilsCom;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -9,23 +22,10 @@ import android.net.Uri;
 import android.provider.MediaStore.Video;
 import android.provider.MediaStore.Video.VideoColumns;
 
-import com.wotu.app.WoTuApp;
-import com.wotu.common.ThreadPool.Job;
-import com.wotu.common.ThreadPool.JobContext;
-import com.wotu.common.WLog;
-import com.wotu.data.MediaDetails;
-import com.wotu.data.MediaItem;
-import com.wotu.data.Path;
-import com.wotu.data.cache.ImageRequest;
-import com.wotu.data.image.LocalMediaItem;
-import com.wotu.data.source.LocalAlbum;
-import com.wotu.data.utils.BitmapUtils;
-import com.wotu.utils.UpdateHelper;
-import com.wotu.utils.UtilsCom;
-
 // LocalVideo represents a video in the local storage.
 public class LocalVideo extends LocalMediaItem {
     private static final String TAG = "LocalVideo";
+    public static final String ITEM_PATH = "/local/video/item";
 
     // Must preserve order between these indices and the order of the terms in
     // the following PROJECTION array.
@@ -42,8 +42,6 @@ public class LocalVideo extends LocalMediaItem {
     private static final int INDEX_BUCKET_ID = 10;
     private static final int INDEX_SIZE = 11;
     private static final int INDEX_RESOLUTION = 12;
-
-    public static final String ITEM_PATH = "/local/video/item";
 
     public static final String[] PROJECTION = new String[] {
             VideoColumns._ID,
@@ -98,6 +96,8 @@ public class LocalVideo extends LocalMediaItem {
         latitude = cursor.getDouble(INDEX_LATITUDE);
         longitude = cursor.getDouble(INDEX_LONGITUDE);
         dateTakenInMs = cursor.getLong(INDEX_DATE_TAKEN);
+        dateAddedInSec = cursor.getLong(INDEX_DATE_ADDED);
+        dateModifiedInSec = cursor.getLong(INDEX_DATE_MODIFIED);
         filePath = cursor.getString(INDEX_DATA);
         durationInSec = cursor.getInt(INDEX_DURATION) / 1000;
         bucketId = cursor.getInt(INDEX_BUCKET_ID);
@@ -106,11 +106,9 @@ public class LocalVideo extends LocalMediaItem {
     }
 
     private void parseResolution(String resolution) {
-        if (resolution == null)
-            return;
+        if (resolution == null) return;
         int m = resolution.indexOf('x');
-        if (m == -1)
-            return;
+        if (m == -1) return;
         try {
             int w = Integer.parseInt(resolution.substring(0, m));
             int h = Integer.parseInt(resolution.substring(m + 1));
@@ -145,23 +143,24 @@ public class LocalVideo extends LocalMediaItem {
 
     @Override
     public Job<Bitmap> requestImage(int type) {
-        return new LocalVideoRequest(mApplication, getPath(), type, filePath);
+        return new LocalVideoRequest(mApplication, getPath(), dateModifiedInSec,
+                type, filePath);
     }
 
-    public static class LocalVideoRequest extends ImageRequest {
+    public static class LocalVideoRequest extends ImageCacheRequest {
         private String mLocalFilePath;
 
-        LocalVideoRequest(WoTuApp application, Path path, int type,
-                String localFilePath) {
-            super(application, path, type, MediaItem.getTargetSize(type));
+        LocalVideoRequest(WoTuApp application, Path path, long timeModified,
+                int type, String localFilePath) {
+            super(application, path, timeModified, type,
+                    MediaItem.getTargetSize(type));
             mLocalFilePath = localFilePath;
         }
 
         @Override
         public Bitmap onDecodeOriginal(JobContext jc, int type) {
             Bitmap bitmap = BitmapUtils.createVideoThumbnail(mLocalFilePath);
-            if (bitmap == null || jc.isCancelled())
-                return null;
+            if (bitmap == null || jc.isCancelled()) return null;
             return bitmap;
         }
     }
@@ -174,7 +173,7 @@ public class LocalVideo extends LocalMediaItem {
 
     @Override
     public int getSupportedOperations() {
-        return SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_PLAY | SUPPORT_INFO;
+        return SUPPORT_DELETE | SUPPORT_SHARE | SUPPORT_PLAY | SUPPORT_INFO ;
     }
 
     @Override
@@ -182,10 +181,7 @@ public class LocalVideo extends LocalMediaItem {
         UtilsCom.assertNotInRenderThread();
         Uri baseUri = Video.Media.EXTERNAL_CONTENT_URI;
         mApplication.getContentResolver().delete(baseUri, "_id=?",
-                new String[] {
-                    String.valueOf(id)
-                });
-        mApplication.getDataManager().broadcastLocalDeletion();
+                new String[]{String.valueOf(id)});
     }
 
     @Override
@@ -228,5 +224,10 @@ public class LocalVideo extends LocalMediaItem {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public String getFilePath() {
+        return filePath;
     }
 }

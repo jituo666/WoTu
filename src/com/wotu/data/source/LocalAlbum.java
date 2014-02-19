@@ -32,7 +32,6 @@ import java.util.ArrayList;
 public class LocalAlbum extends MediaSet {
     private static final String TAG = "LocalAlbum";
     private static final String[] COUNT_PROJECTION = { "count(*)" };
-
     private static final int INVALID_COUNT = -1;
     private final String mWhereClause;
     private final String mOrderClause;

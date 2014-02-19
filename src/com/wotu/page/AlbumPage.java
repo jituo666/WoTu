@@ -286,7 +286,8 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
     }
 
     private void initializeData(Bundle data) {
-        mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), -48385503);
+        //mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 1216519567);
+        mDataPath = new Path(data.getString(DataManager.KEY_MEDIA_PATH), 1509922574);
         mData = mContext.getDataManager().getMediaSet(mDataPath);
         if (mData == null) {
             UtilsBase.fail("MediaSet is null. Path = %s", mDataPath);

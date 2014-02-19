@@ -313,7 +313,8 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         }
     }
 
-    private class ThumbnailLoader extends BitmapLoader {
+
+    private class ThumbnailLoader extends BitmapLoader  {
         private final int mSlotIndex;
         private final MediaItem mItem;
 
@@ -324,7 +325,8 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
         @Override
         protected Future<Bitmap> submitBitmapTask(FutureListener<Bitmap> l) {
-            return mThreadPool.submit(mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
+            return mThreadPool.submit(
+                    mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
         }
 
         @Override
@@ -334,26 +336,19 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
         public void updateEntry() {
             Bitmap bitmap = getBitmap();
-            if (bitmap == null)
-                return; // error or recycled
+            if (bitmap == null) return; // error or recycled
             AlbumEntry entry = mImageData[mSlotIndex % mImageData.length];
             entry.bitmapTexture = new TiledTexture(bitmap);
             entry.content = entry.bitmapTexture;
-            //
-            mTileUploader.addTexture(entry.bitmapTexture);
             if (isActiveSlot(mSlotIndex)) {
+                mTileUploader.addTexture(entry.bitmapTexture);
                 --mActiveRequestCount;
-                if (mActiveRequestCount == 0)
-                    requestNonactiveImages();
-                if (mDataListener != null)
-                    mDataListener.onContentChanged();
+                if (mActiveRequestCount == 0) requestNonactiveImages();
+                if (mDataListener != null) mDataListener.onContentChanged();
+            } else {
+                mTileUploader.addTexture(entry.bitmapTexture);
             }
-            WLog.i(TAG, "ThumbnailLoader updateEntry mSlotIndex:" + mSlotIndex + " texture is null:" + (entry.bitmapTexture == null));
-        }
-
-        @Override
-        protected void recycleBitmap(Bitmap bitmap) {
-            MediaItem.getMicroThumbPool().recycle(bitmap);
+            WLog.i("----", "ThumbnailLoader updateEntry mSlotIndex:" + mSlotIndex + " bitmap w:" + bitmap.getWidth() + " h:" + bitmap.getHeight());
         }
     }
 }

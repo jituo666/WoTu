@@ -2,8 +2,11 @@ package com.wotu.data.image;
 
 import com.wotu.common.Future;
 import com.wotu.common.FutureListener;
+import com.wotu.common.WLog;
+import com.wotu.data.utils.WoTuBitmapPool;
 
 import android.graphics.Bitmap;
+
 
 // We use this class to
 //     1.) load bitmaps in background.
@@ -33,9 +36,10 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
         synchronized (this) {
             mTask = null;
             mBitmap = future.get();
+            WLog.i(TAG, " onFutureDone bitmap w:" + mBitmap.getWidth() + " h:" + mBitmap.getHeight());
             if (mState == STATE_RECYCLED) {
                 if (mBitmap != null) {
-                    recycleBitmap(mBitmap);
+                    WoTuBitmapPool.getInstance().put(mBitmap);
                     mBitmap = null;
                 }
                 return; // don't call callback
@@ -68,7 +72,7 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
     public synchronized void recycle() {
         mState = STATE_RECYCLED;
         if (mBitmap != null) {
-            recycleBitmap(mBitmap);
+            WoTuBitmapPool.getInstance().put(mBitmap);
             mBitmap = null;
         }
         if (mTask != null) mTask.cancel();
@@ -88,5 +92,4 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
 
     abstract protected Future<Bitmap> submitBitmapTask(FutureListener<Bitmap> l);
     abstract protected void onLoadComplete(Bitmap bitmap);
-    abstract protected void recycleBitmap(Bitmap bitmap);
 }

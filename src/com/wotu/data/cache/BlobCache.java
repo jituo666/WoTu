@@ -1,52 +1,3 @@
-/* This is an on-disk cache which maps a 64-bits key to a byte array.
-
- It consists of three files: one index file and two data files. One of the
- data files is "active", and the other is "inactive". New entries are
- appended into the active region until it reaches the size limit. At that
- point the active file and the inactive file are swapped, and the new active
- file is truncated to empty (and the index for that file is also cleared).
- The index is a hash table with linear probing. When the load factor reaches
- 0.5, it does the same thing like when the size limit is reached.
-
- The index file format: (all numbers are stored in little-endian)
- [0]  Magic number: 0xB3273030
- [4]  MaxEntries: Max number of hash entries per region.
- [8]  MaxBytes: Max number of data bytes per region (including header).
- [12] ActiveRegion: The active growing region: 0 or 1.
- [16] ActiveEntries: The number of hash entries used in the active region.
- [20] ActiveBytes: The number of data bytes used in the active region.
- [24] Version number.
- [28] Checksum of [0..28).
- [32] Hash entries for region 0. The size is X = (12 * MaxEntries bytes).
- [32 + X] Hash entries for region 1. The size is also X.
-
- Each hash entry is 12 bytes: 8 bytes key and 4 bytes offset into the data
- file. The offset is 0 when the slot is free. Note that 0 is a valid value
- for key. The keys are used directly as index into a hash table, so they
- should be suitably distributed.
-
- Each data file stores data for one region. The data file is concatenated
- blobs followed by the magic number 0xBD248510.
-
- The blob format:
- [0]  Key of this blob
- [8]  Checksum of this blob
- [12] Offset of this blob
- [16] Length of this blob (not including header)
- [20] Blob
-
- Below are the interface for BlobCache. The instance of this class does not
- support concurrent use by multiple threads.
-
- public BlobCache(String path, int maxEntries, int maxBytes, boolean reset) throws IOException;
- public void insert(long key, byte[] data) throws IOException;
- public byte[] lookup(long key) throws IOException;
- public void lookup(LookupRequest req) throws IOException;
- public void close();
- public void syncIndex();
- public void syncAll();
- public static void deleteFiles(String path);
-*/
 package com.wotu.data.cache;
 
 import android.util.Log;
@@ -58,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.zip.Adler32;
 
 public class BlobCache implements Closeable {
@@ -363,6 +315,16 @@ public class BlobCache implements Closeable {
         updateIndexHeader();
     }
 
+    public void clearEntry(long key) throws IOException {
+        if (!lookupInternal(key, mActiveHashStart)) {
+            return; // Nothing to clear
+        }
+        byte[] header = mBlobHeader;
+        Arrays.fill(header, (byte) 0);
+        mActiveDataFile.seek(mFileOffset);
+        mActiveDataFile.write(header);
+    }
+
     // Appends the data to the active file. It also updates the hash entry.
     // The proper hash entry (suitable for insertion or replacement) must be
     // pointed by mSlotOffset.
@@ -469,6 +431,9 @@ public class BlobCache implements Closeable {
                 return false;
             }
             long blobKey = readLong(header, BH_KEY);
+            if (blobKey == 0) {
+                return false; // This entry has been cleared.
+            }
             if (blobKey != req.key) {
                 Log.w(TAG, "blob key does not match: " + blobKey);
                 return false;

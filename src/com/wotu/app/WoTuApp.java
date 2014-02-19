@@ -7,7 +7,7 @@ import android.os.Looper;
 
 import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
-import com.wotu.data.cache.ImageCacher;
+import com.wotu.data.cache.ImageCacheService;
 
 public interface WoTuApp {
     // basic
@@ -24,5 +24,5 @@ public interface WoTuApp {
 
     public ThreadPool getThreadPool();
 
-    public ImageCacher getImageCacheService();
+    public ImageCacheService getImageCacheService();
 }

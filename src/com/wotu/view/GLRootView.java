@@ -80,7 +80,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
     public GLRootView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mFlags |= FLAG_INITIALIZED;
-        //setEGLConfigChooser(mEglConfigChooser);
         setEGLContextClientVersion(ApiHelper.HAS_GLES20_REQUIRED ? 2 : 1);
         if (ApiHelper.USE_888_PIXEL_FORMAT) {
             setEGLConfigChooser(8, 8, 8, 0, 0, 0);

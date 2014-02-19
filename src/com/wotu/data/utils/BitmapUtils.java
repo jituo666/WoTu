@@ -8,6 +8,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.FloatMath;
+import android.util.Log;
 
 import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
@@ -132,9 +133,17 @@ public class BitmapUtils {
         return resizeBitmapByScale(bitmap, scale, recycle);
     }
 
+    
+    
+    
+    
+    
+    
+    
     public static Bitmap resizeAndCropCenter(Bitmap bitmap, int size, boolean recycle) {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
+
         if (w == size && h == size) return bitmap;
 
         // scale the image so that the shorter side equals to the target;

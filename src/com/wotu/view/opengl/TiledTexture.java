@@ -130,8 +130,10 @@ public class TiledTexture implements Texture {
                 // time. When scrolling, we need to draw several tiles on the screen
                 // at the same time. It may cause a UI jank even these textures has
                 // been uploaded.
-                if (!hasBeenLoad)
-                    next.draw(canvas, 100, 100);
+                if (!hasBeenLoad) {
+                    WLog.i(TAG, "uploadNextTile mWidth:" + next.getWidth() + " mHeight" + next.getHeight() + " mUploadIndex:" + mUploadIndex);
+                    next.draw(canvas, 0, 0);
+                }
             }
         }
         return mUploadIndex == mTiles.length;
@@ -153,6 +155,7 @@ public class TiledTexture implements Texture {
             }
         }
         mTiles = list.toArray(new Tile[list.size()]);
+        WLog.i(TAG, "new TiledTexture mWidth:" + mWidth + " mHeight" + mHeight + " mTiles.length:" + mTiles.length);
     }
 
     public boolean isReady() {

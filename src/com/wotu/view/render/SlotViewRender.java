@@ -1,6 +1,5 @@
 package com.wotu.view.render;
 
-
 import com.wotu.activity.WoTuContext;
 import com.wotu.app.MediaSelector;
 import com.wotu.common.WLog;
@@ -119,12 +118,10 @@ public class SlotViewRender extends SlotViewRenderBase {
         if (content == null) {
             content = mWaitLoadingTexture;
             entry.isWaitDisplayed = true;
-            WLog.d(TAG, "renderSlot index:" + index + " mWaitLoadingTexture");
         } else if (entry.isWaitDisplayed) {
             entry.isWaitDisplayed = false;
             content = new FadeInTexture(mPlaceholderColor, entry.bitmapTexture);
             entry.content = content;
-            WLog.d(TAG, "renderSlot index:" + index + " bitmapTexture:" + (entry.bitmapTexture == null));
         }
 
         drawContent(canvas, content, width, height, entry.rotation);
@@ -132,7 +129,7 @@ public class SlotViewRender extends SlotViewRenderBase {
                 ((FadeInTexture) content).isAnimating()) {
             renderRequestFlags |= SlotView.RENDER_MORE_FRAME;
         }
-//
+        //
         renderRequestFlags |= renderOverlay(canvas, index, entry, width, height);
 
         return renderRequestFlags;

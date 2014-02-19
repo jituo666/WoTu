@@ -2,7 +2,8 @@ package com.wotu.app;
 
 import com.wotu.common.ThreadPool;
 import com.wotu.data.DataManager;
-import com.wotu.data.cache.ImageCacher;
+import com.wotu.data.cache.ImageCacheService;
+import com.wotu.utils.UtilsCom;
 
 import android.app.Application;
 import android.content.Context;
@@ -10,9 +11,22 @@ import android.content.Context;
 public class WoTuAppImpl extends Application implements WoTuApp {
 
     private Object mLock = new Object();
-    private ImageCacher mImageCacheService;
+    private ImageCacheService mImageCacheService;
     private DataManager mDataManager;
     private ThreadPool mThreadPool;
+
+    @Override
+    public void onCreate() {
+        UtilsCom.initialize(this);
+        // TODO 
+/*        initializeAsyncTask();
+        GalleryUtils.initialize(this);
+        WidgetUtils.initialize(this);
+        PicasaSource.initialize(this);
+        UsageStatistics.initialize(this);*/
+        super.onCreate();
+    }
+
 
     @Override
     public synchronized DataManager getDataManager() {
@@ -33,11 +47,11 @@ public class WoTuAppImpl extends Application implements WoTuApp {
     }
 
     @Override
-    public ImageCacher getImageCacheService() {
+    public ImageCacheService getImageCacheService() {
         // This method may block on file I/O so a dedicated lock is needed here.
         synchronized (mLock) {
             if (mImageCacheService == null) {
-                mImageCacheService = new ImageCacher(getAndroidContext());
+                mImageCacheService = new ImageCacheService(getAndroidContext());
             }
             return mImageCacheService;
         }
