@@ -8,6 +8,8 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import com.wotu.common.WLog;
@@ -131,7 +133,6 @@ public class TiledTexture implements Texture {
                 // at the same time. It may cause a UI jank even these textures has
                 // been uploaded.
                 if (!hasBeenLoad) {
-                    WLog.i(TAG, "uploadNextTile mWidth:" + next.getWidth() + " mHeight" + next.getHeight() + " mUploadIndex:" + mUploadIndex);
                     next.draw(canvas, 0, 0);
                 }
             }
@@ -155,7 +156,6 @@ public class TiledTexture implements Texture {
             }
         }
         mTiles = list.toArray(new Tile[list.size()]);
-        WLog.i(TAG, "new TiledTexture mWidth:" + mWidth + " mHeight" + mHeight + " mTiles.length:" + mTiles.length);
     }
 
     public boolean isReady() {

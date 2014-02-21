@@ -152,6 +152,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
     /**
      * 1,set image or video cache range. 2,set image's/video's meta data range.
+     * 1,|_____1/2 data length_____|__________________move by step__________________|______data length_________|
      */
     public void setActiveWindow(int start, int end) {
         if (!(start <= end && end - start <= mImageData.length && end <= mSize)) {
@@ -313,8 +314,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         }
     }
 
-
-    private class ThumbnailLoader extends BitmapLoader  {
+    private class ThumbnailLoader extends BitmapLoader {
         private final int mSlotIndex;
         private final MediaItem mItem;
 
@@ -325,8 +325,7 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
 
         @Override
         protected Future<Bitmap> submitBitmapTask(FutureListener<Bitmap> l) {
-            return mThreadPool.submit(
-                    mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
+            return mThreadPool.submit(mItem.requestImage(MediaItem.TYPE_MICROTHUMBNAIL), this);
         }
 
         @Override
@@ -348,7 +347,6 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
             } else {
                 mTileUploader.addTexture(entry.bitmapTexture);
             }
-            WLog.i("----", "ThumbnailLoader updateEntry mSlotIndex:" + mSlotIndex + " bitmap w:" + bitmap.getWidth() + " h:" + bitmap.getHeight());
         }
     }
 }

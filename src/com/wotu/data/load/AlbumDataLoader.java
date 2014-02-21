@@ -177,8 +177,7 @@ public class AlbumDataLoader {
         if (start == mActiveStart && end == mActiveEnd)
             return;
 
-        UtilsBase.assertTrue(start <= end
-                && end - start <= mData.length && end <= mSize);
+        UtilsBase.assertTrue(start <= end && end - start <= mData.length && end <= mSize);
 
         int length = mData.length;
         mActiveStart = start;
