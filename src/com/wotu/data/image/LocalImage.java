@@ -167,7 +167,6 @@ public class LocalImage extends LocalMediaItem {
                 int type, String localFilePath) {
             super(application, path, timeModified, type,
                     MediaItem.getTargetSize(type));
-            Log.i(TAG, "11mTargetSize" + MediaItem.getTargetSize(type) );
             mLocalFilePath = localFilePath;
         }
 

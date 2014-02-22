@@ -261,7 +261,7 @@ public class AlbumPage extends PageState implements MediaSet.SyncListener {
         mRender = new SlotViewRender(mContext, mSlotView, mSelector);
         mSlotView.setSlotRenderer(mRender);
         mRender.setModel(mAlbumDataLoader);
-        mRootPane.addChild(mSlotView);
+        mRootPane.addComponent(mSlotView);
         mSlotView.setGestureListener(new SlotView.SimpleListener() {
             @Override
             public void onDown(int index) {

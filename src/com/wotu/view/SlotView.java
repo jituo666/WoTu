@@ -9,7 +9,6 @@ import com.wotu.activity.WoTuContext;
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.Animation;
 import com.wotu.common.SynchronizedHandler;
-import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.event.AlbumGestureListener;
 import com.wotu.view.event.ScrollerHelper;

@@ -36,7 +36,6 @@ public abstract class BitmapLoader implements FutureListener<Bitmap> {
         synchronized (this) {
             mTask = null;
             mBitmap = future.get();
-            WLog.i(TAG, " onFutureDone bitmap w:" + mBitmap.getWidth() + " h:" + mBitmap.getHeight());
             if (mState == STATE_RECYCLED) {
                 if (mBitmap != null) {
                     WoTuBitmapPool.getInstance().put(mBitmap);

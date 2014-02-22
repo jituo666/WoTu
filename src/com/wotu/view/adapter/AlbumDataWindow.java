@@ -166,8 +166,6 @@ public class AlbumDataWindow implements AlbumDataLoader.DataListener {
         int contentStart = UtilsBase.clamp((start + end) / 2 - data.length / 2,
                 0, Math.max(0, mSize - data.length));
         int contentEnd = Math.min(contentStart + data.length, mSize);
-        WLog.i(TAG, "setActiveWindow mActiveStart:" + mActiveStart + " mActiveEnd:" + mActiveEnd
-                + " contentStart:" + contentStart + " contentEnd:" + contentEnd);
         setContentWindow(contentStart, contentEnd);
         updateTextureUploadQueue();
         if (mIsActive)

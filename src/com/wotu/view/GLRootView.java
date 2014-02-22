@@ -1,3 +1,4 @@
+
 package com.wotu.view;
 
 import android.content.Context;
@@ -127,7 +128,6 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        WLog.i(TAG, "onDrawFrame ");
         AnimTimer.update();
         mRenderLock.lock();
         while (mFreeze) {
@@ -215,7 +215,11 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
         if (mRenderRequested)
             return;
         mRenderRequested = true;
-        super.requestRender();
+        if (ApiHelper.HAS_POST_ON_ANIMATION) {
+            postOnAnimation(mRequestRenderOnAnimationFrame);
+        } else {
+            super.requestRender();
+        }
     }
 
     @Override
@@ -485,4 +489,20 @@ public class GLRootView extends GLSurfaceView implements Renderer, GLController 
             super.finalize();
         }
     }
+
+    private void superRequestRender() {
+        super.requestRender();
+    }
+
+    @Override
+    public void requestRenderForced() {
+        superRequestRender();
+    }
+    
+    private Runnable mRequestRenderOnAnimationFrame = new Runnable() {
+        @Override
+        public void run() {
+            superRequestRender();
+        }
+    };
 }

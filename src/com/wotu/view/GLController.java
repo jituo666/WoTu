@@ -1,11 +1,12 @@
+
 package com.wotu.view;
 
+import android.content.Context;
 import android.graphics.Matrix;
 
 import com.wotu.activity.OrientationSource;
 import com.wotu.anim.CanvasAnim;
 import com.wotu.view.opengl.GLCanvas;
-
 
 public interface GLController {
 
@@ -18,6 +19,8 @@ public interface GLController {
     public void addOnGLIdleListener(OnGLIdleListener listener);
 
     public void registerLaunchedAnimation(CanvasAnim animation);
+
+    public void requestRenderForced();
 
     public void requestRender();
 
@@ -42,4 +45,6 @@ public interface GLController {
     public void unfreeze();
 
     public void setLightsOutMode(boolean enabled);
+
+    public Context getContext();
 }

@@ -192,8 +192,6 @@ public class AlbumDataLoader {
         if (mContentStart > start || mContentEnd < end || Math.abs(contentStart - mContentStart) > MIN_LOAD_COUNT) {
             setContentWindow(contentStart, contentEnd);
         }
-        WLog.i(TAG, "setActiveWindow mActiveStart:" + mActiveStart + " mActiveEnd:" + mActiveEnd + " contentStart:" + contentStart
-                + " contentEnd:" + contentEnd);
     }
 
     private class MySourceListener implements ContentListener {
@@ -252,7 +250,6 @@ public class AlbumDataLoader {
                 if (setVersion[index] != version) {
                     info.reloadStart = i;
                     info.reloadCount = Math.min(MAX_LOAD_COUNT, n - i);
-                    WLog.i(TAG, " info.reloadCount:" + info.reloadCount);
                     return info;
                 }
             }

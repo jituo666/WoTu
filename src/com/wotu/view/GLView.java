@@ -7,420 +7,446 @@ import android.view.MotionEvent;
 
 import com.wotu.anim.AnimTimer;
 import com.wotu.anim.CanvasAnim;
+import com.wotu.anim.TransitionAnim;
 import com.wotu.common.WLog;
 import com.wotu.utils.UtilsBase;
 import com.wotu.view.opengl.GLCanvas;
 
 import java.util.ArrayList;
 
-@SuppressLint("WrongCall")
+//GLView is a UI component. It can render to a GLCanvas and accept touch
+//events. A GLView may have zero or more child GLView and they form a tree
+//structure. The rendering and event handling will pass through the tree
+//structure.
+//
+//A GLView tree should be attached to a GLController before event dispatching and
+//rendering happens. GLView asks GLController to re-render or re-layout the
+//GLView hierarchy using requestRender() and requestLayoutContentPane().
+//
+//The render() method is called in a separate thread. Before calling
+//dispatchTouchEvent() and layout(), GLController acquires a lock to avoid the
+//rendering thread running at the same time. If there are other entry points
+//from main thread (like a Handler) in your GLView, you need to call
+//lockRendering() if the rendering thread should not run at the same time.
+//
 public class GLView {
+ private static final String TAG = "GLView";
 
-    private static final String TAG = "GLView";
-    public static final int VISIBLE = 0;
-    public static final int INVISIBLE = 1;
+ public static final int VISIBLE = 0;
+ public static final int INVISIBLE = 1;
 
-    private static final int FLAG_INVISIBLE = 1;
-    private static final int FLAG_SET_MEASURED_SIZE = 2;
-    private static final int FLAG_LAYOUT_REQUESTED = 4;
+ private static final int FLAG_INVISIBLE = 1;
+ private static final int FLAG_SET_MEASURED_SIZE = 2;
+ private static final int FLAG_LAYOUT_REQUESTED = 4;
 
-    private GLController mGLController;
-    protected GLView mParent;
-    private GLView mMotionTarget;
-    private ArrayList<GLView> mChilds;
-    private CanvasAnim mAnimation;
+ public interface OnClickListener {
+     void onClick(GLView v);
+ }
 
-    private int mViewFlags = 0;
+ protected final Rect mBounds = new Rect();
+ protected final Rect mPaddings = new Rect();
 
-    protected int mMeasuredWidth = 0;
-    protected int mMeasuredHeight = 0;
+ private GLController mRoot;
+ protected GLView mParent;
+ private ArrayList<GLView> mComponents;
+ private GLView mMotionTarget;
 
-    private int mLastWidthSpec = -1;
-    private int mLastHeightSpec = -1;
+ private CanvasAnim mAnimation;
 
-    protected final Rect mBounds = new Rect();
-    protected final Rect mPaddings = new Rect();
+ private int mViewFlags = 0;
 
-    protected int mScrollX = 0;
-    protected int mScrollY = 0;
+ protected int mMeasuredWidth = 0;
+ protected int mMeasuredHeight = 0;
 
-    private float [] mBackgroundColor;
-    
-    // 渲染
-    protected void render(GLCanvas canvas) {
-        renderBackground(canvas);
-        canvas.save();
-        for (int i = 0, n = getChildCount(); i < n; ++i) {
-            renderChild(canvas, getChild(i));
-        }
-        canvas.restore();
-    }
+ private int mLastWidthSpec = -1;
+ private int mLastHeightSpec = -1;
 
-    public float [] getBackgroundColor() {
-        return mBackgroundColor;
-    }
+ protected int mScrollY = 0;
+ protected int mScrollX = 0;
+ protected int mScrollHeight = 0;
+ protected int mScrollWidth = 0;
 
-    public void setBackgroundColor(float [] color) {
-        mBackgroundColor = color;
-    }
+ private float [] mBackgroundColor;
+ private TransitionAnim mTransition;
 
-    protected void renderBackground(GLCanvas canvas) {
-        if (mBackgroundColor != null) {
-            canvas.clearBuffer(mBackgroundColor);
-        }
-    }
+ public void startAnimation(CanvasAnim animation) {
+     GLController root = getGLRoot();
+     if (root == null) throw new IllegalStateException();
+     mAnimation = animation;
+     if (mAnimation != null) {
+         mAnimation.start();
+         root.registerLaunchedAnimation(mAnimation);
+     }
+     invalidate();
+ }
 
-    protected void renderChild(GLCanvas canvas, GLView component) {
-        if (component.getVisibility() != GLView.VISIBLE
-                && component.mAnimation == null)
-            return;
+ // Sets the visiblity of this GLView (either GLView.VISIBLE or
+ // GLView.INVISIBLE).
+ public void setVisibility(int visibility) {
+     if (visibility == getVisibility()) return;
+     if (visibility == VISIBLE) {
+         mViewFlags &= ~FLAG_INVISIBLE;
+     } else {
+         mViewFlags |= FLAG_INVISIBLE;
+     }
+     onVisibilityChanged(visibility);
+     invalidate();
+ }
 
-        int xoffset = component.mBounds.left - mScrollX;
-        int yoffset = component.mBounds.top - mScrollY;
+ // Returns GLView.VISIBLE or GLView.INVISIBLE
+ public int getVisibility() {
+     return (mViewFlags & FLAG_INVISIBLE) == 0 ? VISIBLE : INVISIBLE;
+ }
 
-        canvas.translate(xoffset, yoffset);
+ // This should only be called on the content pane (the topmost GLView).
+ public void attachToRoot(GLController root) {
+     UtilsBase.assertTrue(mParent == null && mRoot == null);
+     onAttachToRoot(root);
+ }
 
-        CanvasAnim anim = component.mAnimation;
-        if (anim != null) {
-            canvas.save(anim.getCanvasSaveFlags());
-            if (anim.calculate(AnimTimer.get())) {
-                invalidate();
-            } else {
-                component.mAnimation = null;
-            }
-            anim.apply(canvas);
-        }
-        component.render(canvas);
-        if (anim != null)
-            canvas.restore();
-        canvas.translate(-xoffset, -yoffset);
-    }
+ // This should only be called on the content pane (the topmost GLView).
+ public void detachFromRoot() {
+     UtilsBase.assertTrue(mParent == null && mRoot != null);
+     onDetachFromRoot();
+ }
 
-    public GLController getGLController() {
-        return mGLController;
-    }
+ // Returns the number of children of the GLView.
+ public int getComponentCount() {
+     return mComponents == null ? 0 : mComponents.size();
+ }
 
-    // Request re-rendering of the view hierarchy.
-    // This is used for animation or when the contents changed.
-    public void invalidate() {
-        GLController glController = getGLController();
-        if (glController != null)
-            glController.requestRender();
-    }
+ // Returns the children for the given index.
+ public GLView getComponent(int index) {
+     if (mComponents == null) {
+         throw new ArrayIndexOutOfBoundsException(index);
+     }
+     return mComponents.get(index);
+ }
 
-    public void startAnimation(CanvasAnim animation) {
-        GLController glController = getGLController();
-        if (glController == null)
-            throw new IllegalStateException();
-        mAnimation = animation;
-        if (mAnimation != null) {
-            mAnimation.start();
-            glController.registerLaunchedAnimation(mAnimation);
-        }
-        invalidate();
-    }
+ // Adds a child to this GLView.
+ public void addComponent(GLView component) {
+     // Make sure the component doesn't have a parent currently.
+     if (component.mParent != null) throw new IllegalStateException();
 
-    // Sets the visiblity of this GLView (either GLView.VISIBLE or
-    // GLView.INVISIBLE).
-    public void setVisibility(int visibility) {
-        if (visibility == getVisibility())
-            return;
-        if (visibility == VISIBLE) {
-            mViewFlags &= ~FLAG_INVISIBLE;
-        } else {
-            mViewFlags |= FLAG_INVISIBLE;
-        }
-        onVisibilityChanged(visibility);
-        invalidate();
-    }
+     // Build parent-child links
+     if (mComponents == null) {
+         mComponents = new ArrayList<GLView>();
+     }
+     mComponents.add(component);
+     component.mParent = this;
 
-    protected void onVisibilityChanged(int visibility) {
-        for (int i = 0, n = getChildCount(); i < n; ++i) {
-            GLView child = getChild(i);
-            if (child.getVisibility() == GLView.VISIBLE) {
-                child.onVisibilityChanged(visibility);
-            }
-        }
-    }
+     // If this is added after we have a root, tell the component.
+     if (mRoot != null) {
+         component.onAttachToRoot(mRoot);
+     }
+ }
 
-    // Returns GLView.VISIBLE or GLView.INVISIBLE
-    public int getVisibility() {
-        return (mViewFlags & FLAG_INVISIBLE) == 0 ? VISIBLE : INVISIBLE;
-    }
+ // Removes a child from this GLView.
+ public boolean removeComponent(GLView component) {
+     if (mComponents == null) return false;
+     if (mComponents.remove(component)) {
+         removeOneComponent(component);
+         return true;
+     }
+     return false;
+ }
 
-    public Rect getPaddings() {
-        return mPaddings;
-    }
+ // Removes all children of this GLView.
+ public void removeAllComponents() {
+     for (int i = 0, n = mComponents.size(); i < n; ++i) {
+         removeOneComponent(mComponents.get(i));
+     }
+     mComponents.clear();
+ }
 
-    // layout handing
-    public void layout(int left, int top, int right, int bottom) {
-        boolean sizeChanged = setBounds(left, top, right, bottom);
-        mViewFlags &= ~FLAG_LAYOUT_REQUESTED;
-        // We call onLayout no matter sizeChanged is true or not because the
-        // orientation may change without changing the size of the View (for
-        // example, rotate the device by 180 degrees), and we want to handle
-        // orientation change in onLayout.
-        onLayout(sizeChanged, left, top, right, bottom);
-    }
+ private void removeOneComponent(GLView component) {
+     if (mMotionTarget == component) {
+         long now = SystemClock.uptimeMillis();
+         MotionEvent cancelEvent = MotionEvent.obtain(
+                 now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+         dispatchTouchEvent(cancelEvent);
+         cancelEvent.recycle();
+     }
+     component.onDetachFromRoot();
+     component.mParent = null;
+ }
 
-    protected void onLayout( // 子类可以重写
-            boolean changeSize, int left, int top, int right, int bottom) {
-    }
+ public Rect bounds() {
+     return mBounds;
+ }
 
-    private boolean setBounds(int left, int top, int right, int bottom) {
-        boolean sizeChanged = (right - left) != (mBounds.right - mBounds.left)
-                || (bottom - top) != (mBounds.bottom - mBounds.top);
-        mBounds.set(left, top, right, bottom);
-        return sizeChanged;
-    }
+ public int getWidth() {
+     return mBounds.right - mBounds.left;
+ }
 
-    // Request re-layout of the view hierarchy.
-    public void requestLayout() {
-        mViewFlags |= FLAG_LAYOUT_REQUESTED;
-        mLastHeightSpec = -1;
-        mLastWidthSpec = -1;
-        if (mParent != null) {
-            mParent.requestLayout();
-        } else {
-            // Is this a content pane ?
-            GLController glController = getGLController();
-            if (glController != null)
-                glController.requestLayoutContentPane();
-        }
-    }
+ public int getHeight() {
+     return mBounds.bottom - mBounds.top;
+ }
 
-    /**
-     * Gets the bounds of the given descendant that relative to this view.
-     */
-    public boolean getBoundsOf(GLView descendant, Rect out) {
-        int xoffset = 0;
-        int yoffset = 0;
-        GLView view = descendant;
-        while (view != this) {
-            if (view == null)
-                return false;
-            Rect bounds = view.mBounds;
-            xoffset += bounds.left;
-            yoffset += bounds.top;
-            view = view.mParent;
-        }
-        out.set(xoffset, yoffset, xoffset + descendant.getWidth(),
-                yoffset + descendant.getHeight());
-        return true;
-    }
+ public GLController getGLRoot() {
+     return mRoot;
+ }
 
-    // measure handing
-    public void measure(int widthSpec, int heightSpec) {
-        if (widthSpec == mLastWidthSpec && heightSpec == mLastHeightSpec
-                && (mViewFlags & FLAG_LAYOUT_REQUESTED) == 0) {
-            return;
-        }
+ // Request re-rendering of the view hierarchy.
+ // This is used for animation or when the contents changed.
+ public void invalidate() {
+     GLController root = getGLRoot();
+     if (root != null) root.requestRender();
+ }
 
-        mLastWidthSpec = widthSpec;
-        mLastHeightSpec = heightSpec;
+ // Request re-layout of the view hierarchy.
+ public void requestLayout() {
+     mViewFlags |= FLAG_LAYOUT_REQUESTED;
+     mLastHeightSpec = -1;
+     mLastWidthSpec = -1;
+     if (mParent != null) {
+         mParent.requestLayout();
+     } else {
+         // Is this a content pane ?
+         GLController root = getGLRoot();
+         if (root != null) root.requestLayoutContentPane();
+     }
+ }
 
-        mViewFlags &= ~FLAG_SET_MEASURED_SIZE;
-        onMeasure(widthSpec, heightSpec);
-        if ((mViewFlags & FLAG_SET_MEASURED_SIZE) == 0) {
-            throw new IllegalStateException(getClass().getName()
-                    + " should call setMeasuredSize() in onMeasure()");
-        }
-    }
+ protected void render(GLCanvas canvas) {
+     boolean transitionActive = false;
+     if (mTransition != null && mTransition.calculate(AnimTimer.get())) {
+         invalidate();
+         transitionActive = mTransition.isActive();
+     }
+     renderBackground(canvas);
+     canvas.save();
+     if (transitionActive) {
+         mTransition.applyContentTransform(this, canvas);
+     }
+     for (int i = 0, n = getComponentCount(); i < n; ++i) {
+         renderChild(canvas, getComponent(i));
+     }
+     canvas.restore();
+     if (transitionActive) {
+         mTransition.applyOverlay(this, canvas);
+     }
+ }
 
-    protected void onMeasure(int widthSpec, int heightSpec) {
-    }
+ public void setIntroAnimation(TransitionAnim intro) {
+     mTransition = intro;
+     if (mTransition != null) mTransition.start();
+ }
 
-    protected void setMeasuredSize(int width, int height) {
-        mViewFlags |= FLAG_SET_MEASURED_SIZE;
-        mMeasuredWidth = width;
-        mMeasuredHeight = height;
-    }
+ public float [] getBackgroundColor() {
+     return mBackgroundColor;
+ }
 
-    public int getMeasuredWidth() {
-        return mMeasuredWidth;
-    }
+ public void setBackgroundColor(float [] color) {
+     mBackgroundColor = color;
+ }
 
-    public int getMeasuredHeight() {
-        return mMeasuredHeight;
-    }
+ protected void renderBackground(GLCanvas view) {
+     if (mBackgroundColor != null) {
+         view.clearBuffer(mBackgroundColor);
+     }
+     if (mTransition != null && mTransition.isActive()) {
+         mTransition.applyBackground(this, view);
+         return;
+     }
+ }
 
-    //事件分发
-    protected boolean dispatchTouchEvent(MotionEvent event) {
-        int x = (int) event.getX();
-        int y = (int) event.getY();
-        int action = event.getAction();
-        if (mMotionTarget != null) {
-            if (action == MotionEvent.ACTION_DOWN) {
-                MotionEvent cancel = MotionEvent.obtain(event);
-                cancel.setAction(MotionEvent.ACTION_CANCEL);
-                dispatchTouchEvent(cancel, x, y, mMotionTarget, false);
-                mMotionTarget = null;
-            } else {
-                dispatchTouchEvent(event, x, y, mMotionTarget, false);
-                if (action == MotionEvent.ACTION_CANCEL
-                        || action == MotionEvent.ACTION_UP) {
-                    mMotionTarget = null;
-                }
-                return true;
-            }
-        }
-        if (action == MotionEvent.ACTION_DOWN) {
-            // in the reverse rendering order
-            for (int i = getChildCount() - 1; i >= 0; --i) {
-                GLView component = getChild(i);
-                if (component.getVisibility() != GLView.VISIBLE)
-                    continue;
-                if (dispatchTouchEvent(event, x, y, component, true)) {
-                    mMotionTarget = component;
-                    return true;
-                }
-            }
-        }
-        return onTouch(event);
-    }
+ protected void renderChild(GLCanvas canvas, GLView component) {
+     if (component.getVisibility() != GLView.VISIBLE
+             && component.mAnimation == null) return;
 
-    protected boolean onTouch(MotionEvent event) {
-        return false;
-    }
+     int xoffset = component.mBounds.left - mScrollX;
+     int yoffset = component.mBounds.top - mScrollY;
 
-    protected boolean dispatchTouchEvent(MotionEvent event,
-            int x, int y, GLView component, boolean checkBounds) {
-        Rect rect = component.mBounds;
-        int left = rect.left;
-        int top = rect.top;
-        if (!checkBounds || rect.contains(x, y)) {
-            event.offsetLocation(-left, -top);
-            if (component.dispatchTouchEvent(event)) {
-                event.offsetLocation(left, top);
-                return true;
-            }
-            event.offsetLocation(left, top);
-        }
-        return false;
-    }
+     canvas.translate(xoffset, yoffset);
 
-    public Rect bounds() {
-        return mBounds;
-    }
+     CanvasAnim anim = component.mAnimation;
+     if (anim != null) {
+         canvas.save(anim.getCanvasSaveFlags());
+         if (anim.calculate(AnimTimer.get())) {
+             invalidate();
+         } else {
+             component.mAnimation = null;
+         }
+         anim.apply(canvas);
+     }
+     component.render(canvas);
+     if (anim != null) canvas.restore();
+     canvas.translate(-xoffset, -yoffset);
+ }
 
-    public int getWidth() {
-        return mBounds.right - mBounds.left;
-    }
+ protected boolean onTouch(MotionEvent event) {
+     return false;
+ }
 
-    public int getHeight() {
-        return mBounds.bottom - mBounds.top;
-    }
+ protected boolean dispatchTouchEvent(MotionEvent event,
+         int x, int y, GLView component, boolean checkBounds) {
+     Rect rect = component.mBounds;
+     int left = rect.left;
+     int top = rect.top;
+     if (!checkBounds || rect.contains(x, y)) {
+         event.offsetLocation(-left, -top);
+         if (component.dispatchTouchEvent(event)) {
+             event.offsetLocation(left, top);
+             return true;
+         }
+         event.offsetLocation(left, top);
+     }
+     return false;
+ }
 
-    // This should only be called on the content pane (the topmost GLView).
-    public void attachToRoot(GLController glController) {
-        UtilsBase.assertTrue(mParent == null && mGLController == null); //必须是根GLview才可以从外部调用attach
-        onAttachToRoot(glController);
-    }
+ protected boolean dispatchTouchEvent(MotionEvent event) {
+     int x = (int) event.getX();
+     int y = (int) event.getY();
+     int action = event.getAction();
+     if (mMotionTarget != null) {
+         if (action == MotionEvent.ACTION_DOWN) {
+             MotionEvent cancel = MotionEvent.obtain(event);
+             cancel.setAction(MotionEvent.ACTION_CANCEL);
+             dispatchTouchEvent(cancel, x, y, mMotionTarget, false);
+             mMotionTarget = null;
+         } else {
+             dispatchTouchEvent(event, x, y, mMotionTarget, false);
+             if (action == MotionEvent.ACTION_CANCEL
+                     || action == MotionEvent.ACTION_UP) {
+                 mMotionTarget = null;
+             }
+             return true;
+         }
+     }
+     if (action == MotionEvent.ACTION_DOWN) {
+         // in the reverse rendering order
+         for (int i = getComponentCount() - 1; i >= 0; --i) {
+             GLView component = getComponent(i);
+             if (component.getVisibility() != GLView.VISIBLE) continue;
+             if (dispatchTouchEvent(event, x, y, component, true)) {
+                 mMotionTarget = component;
+                 return true;
+             }
+         }
+     }
+     return onTouch(event);
+ }
 
-    // This should only be called on the content pane (the topmost GLView).
-    public void detachFromRoot() {
-        UtilsBase.assertTrue(mParent == null && mGLController != null); //必须是根GLview才可以从外部调用detach
-        onDetachFromGLController();
-    }
+ public Rect getPaddings() {
+     return mPaddings;
+ }
 
-    protected void onAttachToRoot(GLController glController) {
-        mGLController = glController;
-        for (int i = 0, n = getChildCount(); i < n; ++i) {
-            getChild(i).onAttachToRoot(glController); //子GLview的attach办法
-        }
-    }
+ public void layout(int left, int top, int right, int bottom) {
+     boolean sizeChanged = setBounds(left, top, right, bottom);
+     mViewFlags &= ~FLAG_LAYOUT_REQUESTED;
+     // We call onLayout no matter sizeChanged is true or not because the
+     // orientation may change without changing the size of the View (for
+     // example, rotate the device by 180 degrees), and we want to handle
+     // orientation change in onLayout.
+     onLayout(sizeChanged, left, top, right, bottom);
+ }
 
-    protected void onDetachFromGLController() {
-        for (int i = 0, n = getChildCount(); i < n; ++i) {
-            getChild(i).onDetachFromGLController(); ////子GLview的detach办法
-        }
-        mGLController = null;
-    }
+ private boolean setBounds(int left, int top, int right, int bottom) {
+     boolean sizeChanged = (right - left) != (mBounds.right - mBounds.left)
+             || (bottom - top) != (mBounds.bottom - mBounds.top);
+     mBounds.set(left, top, right, bottom);
+     return sizeChanged;
+ }
 
-    //----------------------------component operations-----------------------------
-    // Returns the number of children of the GLView.
-    public int getChildCount() {
-        return mChilds == null ? 0 : mChilds.size();
-    }
+ public void measure(int widthSpec, int heightSpec) {
+     if (widthSpec == mLastWidthSpec && heightSpec == mLastHeightSpec
+             && (mViewFlags & FLAG_LAYOUT_REQUESTED) == 0) {
+         return;
+     }
 
-    // Returns the children for the given index.
-    public GLView getChild(int index) {
-        if (mChilds == null) {
-            throw new ArrayIndexOutOfBoundsException(index);
-        }
-        return mChilds.get(index);
-    }
+     mLastWidthSpec = widthSpec;
+     mLastHeightSpec = heightSpec;
 
-    // Adds a child to this GLView.
-    public void addChild(GLView component) {
-        // Make sure the component doesn't have a parent currently.
-        if (component.mParent != null)
-            throw new IllegalStateException();
+     mViewFlags &= ~FLAG_SET_MEASURED_SIZE;
+     onMeasure(widthSpec, heightSpec);
+     if ((mViewFlags & FLAG_SET_MEASURED_SIZE) == 0) {
+         throw new IllegalStateException(getClass().getName()
+                 + " should call setMeasuredSize() in onMeasure()");
+     }
+ }
 
-        // Build parent-child links
-        if (mChilds == null) {
-            mChilds = new ArrayList<GLView>();
-        }
-        mChilds.add(component);
-        component.mParent = this;
+ protected void onMeasure(int widthSpec, int heightSpec) {
+ }
 
-        // If this is added after we have a glController, tell the component.
-        if (mGLController != null) {
-            component.onAttachToRoot(mGLController);
-        }
-    }
+ protected void setMeasuredSize(int width, int height) {
+     mViewFlags |= FLAG_SET_MEASURED_SIZE;
+     mMeasuredWidth = width;
+     mMeasuredHeight = height;
+ }
 
-    // Removes a child from this GLView.
-    public boolean removeChild(GLView component) {
-        if (mChilds == null)
-            return false;
-        if (mChilds.remove(component)) {
-            removeOneChild(component);
-            return true;
-        }
-        return false;
-    }
+ public int getMeasuredWidth() {
+     return mMeasuredWidth;
+ }
 
-    // Removes all children of this GLView.
-    public void removeAllChilds() {
-        for (int i = 0, n = mChilds.size(); i < n; ++i) {
-            removeOneChild(mChilds.get(i));
-        }
-        mChilds.clear();
-    }
+ public int getMeasuredHeight() {
+     return mMeasuredHeight;
+ }
 
-    private void removeOneChild(GLView component) {
-        if (mMotionTarget == component) {
-            long now = SystemClock.uptimeMillis();
-            MotionEvent cancelEvent = MotionEvent.obtain(
-                    now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
-            dispatchTouchEvent(cancelEvent);
-            cancelEvent.recycle();
-        }
-        component.onDetachFromGLController();
-        component.mParent = null;
-    }
+ protected void onLayout(
+         boolean changeSize, int left, int top, int right, int bottom) {
+ }
 
-    //----------------------------end component operations-----------------------------
+ /**
+  * Gets the bounds of the given descendant that relative to this view.
+  */
+ public boolean getBoundsOf(GLView descendant, Rect out) {
+     int xoffset = 0;
+     int yoffset = 0;
+     GLView view = descendant;
+     while (view != this) {
+         if (view == null) return false;
+         Rect bounds = view.mBounds;
+         xoffset += bounds.left;
+         yoffset += bounds.top;
+         view = view.mParent;
+     }
+     out.set(xoffset, yoffset, xoffset + descendant.getWidth(),
+             yoffset + descendant.getHeight());
+     return true;
+ }
 
-    public void lockRendering() {
-        if (mGLController != null) {
-            mGLController.lockRenderThread();
-        }
-    }
+ protected void onVisibilityChanged(int visibility) {
+     for (int i = 0, n = getComponentCount(); i < n; ++i) {
+         GLView child = getComponent(i);
+         if (child.getVisibility() == GLView.VISIBLE) {
+             child.onVisibilityChanged(visibility);
+         }
+     }
+ }
 
-    public void unlockRendering() {
-        if (mGLController != null) {
-            mGLController.unlockRenderThread();
-        }
-    }
+ protected void onAttachToRoot(GLController root) {
+     mRoot = root;
+     for (int i = 0, n = getComponentCount(); i < n; ++i) {
+         getComponent(i).onAttachToRoot(root);
+     }
+ }
 
-    // This is for debugging only.
-    // Dump the view hierarchy into log.
-    void dumpTree(String prefix) {
-        WLog.d(TAG, prefix + getClass().getSimpleName());
-        for (int i = 0, n = getChildCount(); i < n; ++i) {
-            getChild(i).dumpTree(prefix + "....");
-        }
-    }
+ protected void onDetachFromRoot() {
+     for (int i = 0, n = getComponentCount(); i < n; ++i) {
+         getComponent(i).onDetachFromRoot();
+     }
+     mRoot = null;
+ }
+
+ public void lockRendering() {
+     if (mRoot != null) {
+         mRoot.lockRenderThread();
+     }
+ }
+
+ public void unlockRendering() {
+     if (mRoot != null) {
+         mRoot.unlockRenderThread();
+     }
+ }
+
+ // This is for debugging only.
+ // Dump the view hierarchy into log.
+ void dumpTree(String prefix) {
+     WLog.d(TAG, prefix + getClass().getSimpleName());
+     for (int i = 0, n = getComponentCount(); i < n; ++i) {
+         getComponent(i).dumpTree(prefix + "....");
+     }
+ }
 }
