@@ -29,8 +29,24 @@
 
 
 参考：
-1，https://github.com/liaohuqiu/cube-sdk，文档在这里：http://cube-sdk.liaohuqiu.net/
-2，UniversalImageDownloader
-3，opengl blog:http://blog.csdn.net/jackie03/article/category/1086433
+
+1，	https://github.com/liaohuqiu/cube-sdk，文档在这里：http://cube-sdk.liaohuqiu.net/
+2，
+	2.1,
+	UniversalImageDownloader(UID):https://github.com/dodola/Android-Universal-Image-Loader
+	2.2,
+	   Picasso:
+	http://github.com/square/picasso
+	参考项目：
+	https://github.com/nostra13/Android-Universal-Image-Loader
+	https://github.com/mitmel/Android-Image-Cache
+	https://github.com/novoda/ImageLoader
+	https://github.com/square/okhttp
+	2.3,
+	Google - Volley:
+	git clone https://android.googlesource.com/platform/frameworks/volley
+
+3，	opengl blog:http://blog.csdn.net/jackie03/article/category/1086433
 	http://www.opengl.org/
 	http://www.yakergong.net/nehe/
+
