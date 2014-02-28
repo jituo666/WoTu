@@ -35,7 +35,7 @@
 	2.1,
 	UniversalImageDownloader(UID):https://github.com/dodola/Android-Universal-Image-Loader
 	2.2,
-	   Picasso:
+	Picasso:
 	http://github.com/square/picasso
 	参考项目：
 	https://github.com/nostra13/Android-Universal-Image-Loader
@@ -54,4 +54,6 @@
 	[从零开始学习OpenGL ES]:http://mkhgg.blog.51cto.com/1741572/656372
 	[openGL的教程收集]:http://mkhgg.blog.51cto.com/1741572/655493
 	[OpenGL ES入门指南]:http://mkhgg.blog.51cto.com/1741572/655447
+	[OpenGL纹理]:http://www.cnblogs.com/yxnchinahlj/archive/2010/11/19/1881517.html
+	[OpenGL教程]:http://user.xmission.com/~nate/opengl.html
 
