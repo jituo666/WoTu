@@ -13,7 +13,30 @@
 2,Surafce/SurfaceFlinger
 3,Skia&OpenglEs
 4,FrameBuffer,OverLay&Camera
--------------------------------app dev issues-------------------------------
+
+//////////////////
+Android GUI相关
+1，	Andriod系统内存分配
+2，	Andoroid应用内存分配
+Native内存和虚拟机内存分布情况以及相互关系，虚拟机内存管理策略，统计策略。
+一个应用的内存管理策略，分布情况。
+3，	位图->内存，如何使用位图，位图操作，详见开发文档。
+大图如何展示，位图内存如何管理，缓存策略，内存中缓存，IO存储中缓存。
+4，	绘制（操作内存中数据）
+4.1  2D-skia(图形库)
+4.2  3D-opengl/opengles(图形库); expand:计算机图形学，数字图像处理，
+开源项目opencv,gimp，VC++图形处理
+5，设备，如何将绘制的内存关联到设备。
+	2D关联 
+	3D关联 EGL
+	Surface->surfaceflinger/overlay->framebuffer
+6,事件系统 input，eventhub，事件的截获、处理；
+7，AndroidGUI相关的关键类：
+activity 、view、 viewRoot、window、windowsManager、surface、surfaceflinger、eventhub
+
+
+
+-------------------------------app development issues-------------------------------
 (III),基本框架系统
 1,ServiceManager,ActivityManager,WindowsManager,PackageManager
 2,SurfaceFlinger & AudioFlinger
@@ -24,7 +47,7 @@
 2,init && HAL
 3,all system services & dalvik (c)
 4,all framework services (java/c/c++)
-5,framework proxy All Managers
+5,framework proxy: All Managers
 6,app development
 
 
@@ -56,4 +79,5 @@
 	[OpenGL ES入门指南]:http://mkhgg.blog.51cto.com/1741572/655447
 	[OpenGL纹理]:http://www.cnblogs.com/yxnchinahlj/archive/2010/11/19/1881517.html
 	[OpenGL教程]:http://user.xmission.com/~nate/opengl.html
+	【计算机图形学】：http://cs.hust.edu.cn/webroot/courses/csgraphics/jiaocai.php?bookpage=7_d
 
