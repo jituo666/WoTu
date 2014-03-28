@@ -19,9 +19,9 @@ public class WoTuAppImpl extends Application implements WoTuApp {
     public void onCreate() {
         UtilsCom.initialize(this);
         // TODO 
-/*        initializeAsyncTask();
-        GalleryUtils.initialize(this);
-        WidgetUtils.initialize(this);
+        //initializeAsyncTask();
+        UtilsCom.initialize(this);
+        /*WidgetUtils.initialize(this);
         PicasaSource.initialize(this);
         UsageStatistics.initialize(this);*/
         super.onCreate();
